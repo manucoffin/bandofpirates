@@ -15,6 +15,8 @@ Template.game.rendered = function() {
 	var map;
 	var layer;
 	var player;
+	var sprite;
+	var cursors;
 
 	function preload(){
 	
@@ -24,58 +26,6 @@ Template.game.rendered = function() {
 
 	}
 
-/*
-	function create() {
-
-	    game.stage.backgroundColor = '#787878';
-	    map = game.add.tilemap('worldTileMap');
-	    map.addTilesetImage('SuperMarioTileset', 'tiles');
-	    layer = map.createLayer('Background');
-	    layer.resizeWorld();
-
-	    // set the size of the map
-	    game.world.setBounds(0, 0, 1024, 768);
-    	
-
-	    //  Enable Arcade Physics for the player
-	    // game.physics.enable(player, Phaser.Physics.ARCADE);
-
-	    //  Tell it we don't want physics to manage the rotation
-	    // player.body.allowRotation = false;
-	    // player.body.move = false;
-
-	    player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
-    	game.physics.enable(player, Phaser.Physics.ARCADE);
-
-    	player.body.collideWorldBounds = true;
-    	player.anchor.setTo(0.5, 0.5);
-    	
-    	game.input.onDown.add(moveBoat, this);
-    	// game.camera.follow(player);
-
-	}
-
-	function update(){
-
-	}
-
-
-	function moveBoat(pointer) {
-		//  300 = 300 pixels per second = the speed the sprite will move at, regardless of the distance it has to travel
-		var duration = (game.physics.arcade.distanceToPointer(player, pointer) / 300) * 1000;
-		tween = game.add.tween(player).to( {x: pointer.worldX, y: pointer.worldY}, duration, Phaser.Easing.Linear.None);
-
-	    tween.start();
-
-	}
-
-	*/
-
-	var static1;
-	var static2;
-	var sprite;
-	var cursors;
-
 	function create() {
 
 		game.stage.backgroundColor = '#787878';
@@ -84,48 +34,54 @@ Template.game.rendered = function() {
 	    layer = map.createLayer('Background');
 	    layer.resizeWorld();
 	    game.world.setBounds(0, 0, 1600, 1600);
+		game.physics.startSystem(Phaser.Physics.ARCADE);
 
-		//	Enable p2 physics
-		game.physics.startSystem(Phaser.Physics.P2JS);
-
-	    //  Make things a bit more bouncey
-	    // game.physics.p2.restitution = 0.8;
-
-	    //  Add a sprite
+		// ---------------------------------------
+	    // 	Sprite settings:
+	    // ---------------------------------------
 		sprite = game.add.sprite(400, 300, 'player');
-	    game.physics.p2.enable(sprite);
+	    game.physics.enable(sprite, Phaser.Physics.ARCADE);
+	    sprite.anchor.setTo(0.5, 0.5);
+	    sprite.momentumVelocity = 0;
 	    // sprite.body.setCircle(44);
+
 
 	    // to use the keyboard
 	    cursors = game.input.keyboard.createCursorKeys();
-
 	    game.camera.follow(sprite);
 
 	}
 
 	function update() {
 
-	    if (cursors.left.isDown)
+
+		sprite.body.velocity.x = 0;
+	    sprite.body.velocity.y = 0;
+	    sprite.body.angularVelocity = 0;
+
+	    // each loop we decrease the speed of the boat to create the momentum effect
+	    if(sprite.momentumVelocity>0)
 	    {
-	    	sprite.body.rotateLeft(80);
-	    }
-	    else if (cursors.right.isDown)
-	    {
-	    	sprite.body.rotateRight(80);
-	    }
-	    else
-	    {
-	        sprite.body.setZeroRotation();
+	    	sprite.momentumVelocity -= 1;
 	    }
 
-	    if (cursors.up.isDown)
+	    if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
 	    {
-	    	sprite.body.thrust(100);
+	        sprite.body.angularVelocity = -200;
 	    }
-	    else if (cursors.down.isDown)
+	    else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
 	    {
-	    	sprite.body.reverse(100);
+	        sprite.body.angularVelocity = 200;
 	    }
+
+	    if (game.input.keyboard.isDown(Phaser.Keyboard.UP))
+	    {
+	    	// set the velocity, which create a thrust
+	        sprite.momentumVelocity = 200;
+	    }
+
+	    // move the boat in the direction it heads to
+	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, sprite.body.velocity);
 
 	}
 }
