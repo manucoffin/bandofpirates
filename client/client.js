@@ -1,4 +1,37 @@
+Meteor.subscribe('boats');
+
+
+// retrieve the just-created boat id while we don't have user accounts etc
+var boatId;
+
+Meteor.call("insertBoat", function(error, result){
+	boatId = result;
+	console.log(boatId)
+});
+
+
+
+
+
 Template.game.rendered = function() {
+
+
+
+
+	var query = Boats.find();
+	var handle = query.observeChanges({
+		// callback each time the boats db changes
+		changed: function () {
+			console.log(query)
+		}
+	});
+
+
+
+// ------------------------------------
+//		THE GAME
+// ------------------------------------
+
 
 	var game = new Phaser.Game(
 		1024, // size of the canvas created
@@ -17,6 +50,8 @@ Template.game.rendered = function() {
 	var player;
 	var sprite;
 	var cursors;
+	var point = new Phaser.Point();
+	var mytimer = 0;
 
 	function preload(){
 	
@@ -54,10 +89,11 @@ Template.game.rendered = function() {
 
 	function update() {
 
-
 		sprite.body.velocity.x = 0;
 	    sprite.body.velocity.y = 0;
 	    sprite.body.angularVelocity = 0;
+
+
 
 	    // each loop we decrease the speed of the boat to create the momentum effect
 	    if(sprite.momentumVelocity>0)
@@ -80,8 +116,12 @@ Template.game.rendered = function() {
 	        sprite.momentumVelocity = 200;
 	    }
 
-	    // move the boat in the direction it heads to
-	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, sprite.body.velocity);
+	    // set the new point coordinates
+	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, point);
+	    
+		mytimer++;
 
+		Meteor.call("updateBoat", boatId, mytimer);
+		
 	}
 }
