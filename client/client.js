@@ -1,28 +1,44 @@
 Meteor.subscribe('boats');
 
 
-// retrieve the just-created boat id while we don't have user accounts etc
-var boatId;
-
-Meteor.call("insertBoat", function(error, result){
-	boatId = result;
-	console.log(boatId)
-});
-
-
-
-
 
 Template.game.rendered = function() {
 
+	// retrieve the just-created boat id while we don't have user accounts etc
+	var boatId;
+
+	// Meteor.call("insertBoat", function(error, result){
+	// 	boatId = result;
+	// 	console.log(boatId)
+	// });
 
 
+// move the boat locally
+// update the db with the position
+// broadcast the position
+// update all boats position exept the one of the user
 
-	var query = Boats.find();
+	var query = Boats.find({});
 	var handle = query.observeChanges({
 		// callback each time the boats db changes
 		changed: function () {
-			console.log(query)
+			var boatsArray = query.fetch();
+
+			// the last boat created 
+			let boat = boatsArray[boatsArray.length-1];
+
+			sprite.body.velocity.x = 0;
+	    	sprite.body.velocity.y = 0;
+	    	sprite.body.angularVelocity = boat.angularVelocity;
+
+			game.physics.arcade.velocityFromAngle(sprite.angle, boat.momentumVelocity, sprite.body.velocity);
+			
+			// for(var i=0; i<boatsArray.length; i++)
+			// {
+			// 	// boatsArray[i]
+			// }
+			// console.log(query.fetch());
+
 		}
 	});
 
@@ -51,7 +67,6 @@ Template.game.rendered = function() {
 	var sprite;
 	var cursors;
 	var point = new Phaser.Point();
-	var mytimer = 0;
 
 	function preload(){
 	
@@ -89,9 +104,15 @@ Template.game.rendered = function() {
 
 	function update() {
 
-		sprite.body.velocity.x = 0;
-	    sprite.body.velocity.y = 0;
-	    sprite.body.angularVelocity = 0;
+		// set an object to be send to the database
+		let boatProperties = {
+			angularVelocity: 0,
+			momentumVelocity: 0
+		}
+
+		// sprite.body.velocity.x = 0;
+	 //    sprite.body.velocity.y = 0;
+	 //    sprite.body.angularVelocity = 0;
 
 
 
@@ -99,29 +120,34 @@ Template.game.rendered = function() {
 	    if(sprite.momentumVelocity>0)
 	    {
 	    	sprite.momentumVelocity -= 1;
+	    	boatProperties.momentumVelocity = sprite.momentumVelocity;
 	    }
 
+	    // on keyboard input, we update the object
 	    if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
 	    {
-	        sprite.body.angularVelocity = -200;
+	        // sprite.body.angularVelocity = -200;
+	        boatProperties.angularVelocity = -200;
 	    }
 	    else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
 	    {
-	        sprite.body.angularVelocity = 200;
+	        // sprite.body.angularVelocity = 200;
+	        boatProperties.angularVelocity = 200;
 	    }
 
 	    if (game.input.keyboard.isDown(Phaser.Keyboard.UP))
 	    {
 	    	// set the velocity, which create a thrust
 	        sprite.momentumVelocity = 200;
+	        boatProperties.momentumVelocity = sprite.momentumVelocity;
 	    }
 
 	    // set the new point coordinates
-	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, point);
+	    // game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, sprite.body.velocity);
 	    
-		mytimer++;
-
-		Meteor.call("updateBoat", boatId, mytimer);
+	    // finaly we update the database with new properties stored in the object
+		// Meteor.call("updateBoat", boatId, sprite.x, sprite.y);
+		Meteor.call("updateBoat", boatId, boatProperties);
 		
 	}
 }
