@@ -11,7 +11,8 @@ Template.game.rendered = function() {
 	// 	boatId = result;
 	// 	console.log(boatId)
 	// });
-
+	
+	var olofggdg;
 
 // move the boat locally
 // update the db with the position
