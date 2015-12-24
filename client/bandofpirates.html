@@ -3,12 +3,19 @@
 </head>
 <body>
 
-	{{> game}}	
+	{{> loginButtons}}
 
+	<button id="createBoatBtn">create a boat</button>
+	<button id="dropCollectionBtn">drop boats collection</button>
+
+	{{> game}}	
 	<!-- <section id="status-bar"></section> -->
+
 
 </body>
 
 <template name="game">
-	<section id="game-view"></section>
+	<section id="game-view">
+		<div id="test" style="position:absolute; width:100px; height:50px; background-color:red"></div>
+	</section>
 </template>
