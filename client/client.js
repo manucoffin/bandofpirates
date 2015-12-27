@@ -8,22 +8,6 @@ Accounts.ui.config({
 
 
 
-// ------------------------------------------------------------------------
-//		BOAT CLASS
-// ------------------------------------------------------------------------
-
-
-class Boat {
-	constructor(id, x, y){
-		this.id = id;
-		this.x = x;
-		this.y = y;
-	}
-}
-
-
-
-
 // move the player's boat locally
 // update the db with the new position of player's boat
 // update all distant players boats' position locally
@@ -33,8 +17,15 @@ Meteor.subscribe('boats'); // get messages send from the server
 
 Template.game.rendered = function() {
 
-	// array of distant players
-	var dPlayers;
+	var dPlayers; // array of distant players
+	var map;
+	var layer;
+	var sprite; // local player
+	var cursors;
+	var lBullets; // LOCAL bullets
+	var fireRate = 100;
+	var nextFire = 0;
+
 
 
 	// return an array of all created boats
@@ -42,35 +33,12 @@ Template.game.rendered = function() {
 	
 	var existingBoats = query.fetch();
 
-	// for(var i=0; i<existingBoats.length; i++)
-	// {
-	// 	// if owner of the boat is not the user currently logged in
-	// 	if ( existingBoats[i].owner != Meteor.user()._id )
-	// 	{
-	// 		dPlayers.push({
-	// 			sprite: "",
-	// 			id: ""
-	// 		});
-	// 	}
-
-	// 	var dPlayer = 
-	// }
-
 	var handle = query.observeChanges({
 		// callback each time the boats db changes
 		changed: function () {
 
-
 			// need to declare the array again because it is not accessible from here
 			let boatsArray = query.fetch();
-
-
-			// dPlayers.forEach(function (enemy) {
-		 //    	enemy.body.x = boatsArray
-		 //    });
-
-
-			
 
 			// loop through all the boats into the database
 			for(var i=0; i<boatsArray.length; i++)
@@ -78,41 +46,25 @@ Template.game.rendered = function() {
 				// if the boat is not owned by the current user
 				if (boatsArray[i].owner != Meteor.user()._id)
 				{
-					$("#test").html(boatsArray[i].x + " __ " + boatsArray[i].y);
-
 
 					// then we loop in our local enemy array
 					dPlayers.forEach(function(enemy) {
-						// console.log(enemy.id);
 						// and if the id in local array and the one in the db match
 						if(enemy.id == boatsArray[i].owner) {
 							// we update the coordinates
 							enemy.x = boatsArray[i].x;
 							enemy.y = boatsArray[i].y;
+							enemy.angle = boatsArray[i].angle;
 						}
 					}, this);
 
-					// populate and update array of distant players with id of players
-					// dPlayers[i].id = boatsArray[i].owner;
-
-					// console.log(dPlayers[i].id);
-
-					// move distant players boats
-					// dPlayers[i].sprite.body.x = boatsArray[i].x;
-					// dPlayers[i].sprite.body.y = boatsArray[i].y;
 				}
 			}
-
-			// console.log(dPlayers);
 		}
 	});
 
 
 
-	// function createDistantPlayer(){
-	// 	let boat = new Boat(30, 30);
-	// 	dPlayers.add(boat);
-	// }
 
 
 // ------------------------------------------------------------------------
@@ -137,14 +89,6 @@ Template.game.rendered = function() {
 		}
 	);
 
-	var map;
-	var layer;
-	var sprite;
-	var cursors;
-
-
-
-
 
 
 
@@ -153,7 +97,8 @@ Template.game.rendered = function() {
 	
 		game.load.tilemap('worldTileMap', 'assets/worldMap.json', null, Phaser.Tilemap.TILED_JSON);
     	game.load.image('tiles', 'assets/tiles/super_mario.png');
-    	game.load.image('player','assets/sprites/guybrush_sprite.png');
+    	game.load.image('player','assets/sprites/arrow.png');
+    	game.load.image('bullet','assets/sprites/blue_ball.png');
 
 	}
 
@@ -188,6 +133,25 @@ Template.game.rendered = function() {
 	    dPlayers.physicsBodyType = Phaser.Physics.ARCADE;
 
 
+	    lBullets = game.add.group();
+	    lBullets.enableBody = true;
+	    lBullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+	    // create pool of LOCAL lBullets with some properties
+	    for(var i=0; i<10; i++)
+	    {
+	    	let lBulletSprite = game.add.sprite(100, 100, 'bullet');
+	    	lBulletSprite.id = Meteor.user()._id;
+	    	lBulletSprite.anchor.setTo(0.5, 0.5);
+	    	lBullets.add(lBulletSprite);
+	    	// we need to "kill" the sprite (make it invisible) to initialize a pool full of dead bullets
+	    	lBulletSprite.kill();
+	    }
+	    // bullets.createMultiple(10, 'bullet');
+	    lBullets.setAll('checkWorldBounds', true);
+	    lBullets.setAll('outOfBoundsKill', true);
+
+
 
 	    // initialize the array of distant players
 	    for(var i=0; i<existingBoats.length; i++)
@@ -198,30 +162,14 @@ Template.game.rendered = function() {
 
 			    let dPlayerSprite = game.add.sprite(100, 100, 'player');
 			    dPlayerSprite.id = existingBoats[i].owner;
-
+			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayers.add(dPlayerSprite);
 
-			    // dPlayers.create('player');
-
-			    // var boat = new Boat(existingBoats[i].owner, 100, 100);
-			    // dPlayers.add(boat);
-
-			    // createDistantPlayer();
-			    //dPlayers.createMultiple(50, 'player');
-			    // dPlayers.setAll('anchor.x', 0.5);
-			    // dPlayers.setAll('anchor.y', 0.5);
-			    // dPlayers.setAll('outOfBoundsKill', true);
-			    // dPlayers.setAll('checkWorldBounds', true);
-			    // dPlayers.forEach(function (enemy) {
-			    // 	enemy.id = existingBoats[i].owner;
-			    // 	console.log(enemy)
-			    // 	// console.log("id enemy : " + enemy.id)
-			    // });
-
-				// dPlayers.id = existingBoats[i].owner;
 			}
 		}
 
+
+		// initialize array of distant lBullets
 
 
 
@@ -254,7 +202,7 @@ Template.game.rendered = function() {
 	    }
 
 
-	    // on keyboard input, change angle or speed of the boat
+	    // Turn Left or Right
 	    if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
 	    {
 	        sprite.body.angularVelocity = -200;
@@ -264,6 +212,7 @@ Template.game.rendered = function() {
 	        sprite.body.angularVelocity = 200;
 	    }
 
+	    // Move forward
 	    if (game.input.keyboard.isDown(Phaser.Keyboard.UP))
 	    {
 	    	// set the velocity, which create a thrust
@@ -271,13 +220,58 @@ Template.game.rendered = function() {
 	        sprite.momentumVelocity = 200;
 	    }
 
+	    // Fire
+	    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
+	    {
+	        fire(sprite.rotation);
+	    }
+
 	    // move the boat locally
 	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, sprite.body.velocity);
 	    
 	    // finaly we update the database with new position of the boat
-		Meteor.call("updateBoat", Meteor.user(), {x: sprite.body.x, y: sprite.body.y});
-		
+		Meteor.call("updateBoat", 
+					Meteor.user(), 
+					{x: sprite.body.x, y: sprite.body.y, angle: sprite.angle}
+					//{bX: bullet.x, bY: bullet.y}
+					);
+		// Meteor.call("updatelBullets");
+
 	}
+
+
+
+
+
+// ------------------------------------------------------------------------
+//		GAME FUNCTIONS
+// ------------------------------------------------------------------------
+
+
+
+	function fire(angle){
+		// if enough time has been spend since the last shot 
+		// and if there are enough lBullets in the pool
+		if (game.time.now > nextFire && lBullets.countDead() > 0)
+	    {
+	    	// set the time before we can shoot again
+	        nextFire = game.time.now + fireRate;
+
+	        // get a "dead" bullet (inactive bullet)
+	        let bullet = lBullets.getFirstDead();
+
+	        // and bring it back to life at sprite position
+	        bullet.reset(sprite.x - 8, sprite.y);
+
+	        // make the bullet move in the direction wanted
+	        bullet.rotation = sprite.rotation;
+	        game.physics.arcade.velocityFromRotation(angle, 400, bullet.body.velocity);
+	    }
+
+	}
+
+
+
 }
 
 
