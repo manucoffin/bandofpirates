@@ -25,13 +25,11 @@ Template.game.rendered = function() {
 	var lBullets; // LOCAL bullets
 	var fireRate = 100;
 	var nextFire = 0;
+	var lBulletsDatasToSend = []; // an array of useful datas about bullets that we send in the database
 
 
-
-	// return an array of all created boats
-	var query = Boats.find({});
-	
-	var existingBoats = query.fetch();
+	var query = Boats.find({});	
+	var existingBoats = query.fetch(); // all the boats stored in the database
 
 	var handle = query.observeChanges({
 		// callback each time the boats db changes
@@ -58,6 +56,16 @@ Template.game.rendered = function() {
 						}
 					}, this);
 
+
+					// we also loop in the bullets array of each boat
+					dBullets.forEach(function(bullet) {
+						if (bullet.ownerId == boatsArray[i].owner)
+						{
+							bullet.x = boatsArray[i].bullets[bullet.bulletId].x;
+							bullet.y = boatsArray[i].bullets[bullet.bulletId].y;
+						}
+	
+					}, this);
 				}
 			}
 		}
@@ -78,8 +86,8 @@ Template.game.rendered = function() {
 
 
 	var game = new Phaser.Game(
-		1024, // size of the canvas created
-		768,
+		500, // size of the canvas created
+		500,
 		Phaser.AUTO,
 		'game-view', // div in which the canvas is appened
 		{ 
@@ -120,37 +128,51 @@ Template.game.rendered = function() {
 		game.physics.startSystem(Phaser.Physics.ARCADE);
 
 		// ---------------------------------------
-	    // 	Sprite settings:
+	    // 	Sprites settings:
 	    // ---------------------------------------
+
+	    // local player sprite
 		sprite = game.add.sprite(400, 300, 'player');
 	    game.physics.enable(sprite, Phaser.Physics.ARCADE);
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
-	    // sprite.body.setCircle(44);
 
+	    // distant players group
 	    dPlayers = game.add.group();
 		dPlayers.enableBody = true;
 	    dPlayers.physicsBodyType = Phaser.Physics.ARCADE;
 
-
+	    // local bullets group
 	    lBullets = game.add.group();
 	    lBullets.enableBody = true;
 	    lBullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+	    // distant bullets group
+	    dBullets = game.add.group();
+		dBullets.enableBody = true;
+	    dBullets.physicsBodyType = Phaser.Physics.ARCADE;
+
 
 	    // create pool of LOCAL lBullets with some properties
 	    for(var i=0; i<10; i++)
 	    {
 	    	let lBulletSprite = game.add.sprite(100, 100, 'bullet');
-	    	lBulletSprite.id = Meteor.user()._id;
+	    	lBulletSprite.ownerId = Meteor.user()._id; // boat id
+	    	lBulletSprite.bulletId = i; // bullet id, to retrieve them easily
 	    	lBulletSprite.anchor.setTo(0.5, 0.5);
 	    	lBullets.add(lBulletSprite);
 	    	// we need to "kill" the sprite (make it invisible) to initialize a pool full of dead bullets
 	    	lBulletSprite.kill();
 	    }
-	    // bullets.createMultiple(10, 'bullet');
 	    lBullets.setAll('checkWorldBounds', true);
 	    lBullets.setAll('outOfBoundsKill', true);
-
+    
+	    // we need to store useful properties of each bullets in an array
+	    // because we can't just save the phaser.group in the database
+		lBullets.forEach(function(member){
+			member = {ownerId: 0, x: 0, y: 0};
+			lBulletsDatasToSend.push(member);
+		});
 
 
 	    // initialize the array of distant players
@@ -159,18 +181,25 @@ Template.game.rendered = function() {
 			// if owner of the boat is not the user currently logged in
 			if ( existingBoats[i].owner != Meteor.user()._id )
 			{
-
+				// we add sprites to the group
 			    let dPlayerSprite = game.add.sprite(100, 100, 'player');
 			    dPlayerSprite.id = existingBoats[i].owner;
 			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayers.add(dPlayerSprite);
 
+			    // then we loop through bullets array of each boat
+			    for(var j=0; j<existingBoats[i].bullets.length; j++)
+			    {
+			    	// and we create the bullets sprites
+			    	let dBulletSprite = game.add.sprite(100, 100, 'bullet');
+				    dBulletSprite.ownerId = existingBoats[i].owner;
+				    dBulletSprite.bulletId = j;
+				    dBulletSprite.anchor.setTo(0.5, 0.5);
+				    dBullets.add(dBulletSprite);
+
+			    }
 			}
 		}
-
-
-		// initialize array of distant lBullets
-
 
 
 
@@ -226,16 +255,23 @@ Template.game.rendered = function() {
 	        fire(sprite.rotation);
 	    }
 
+	    // we loop through the bullets group
+	    lBullets.forEach(function(bullet)
+	    {
+	    	// and we set the datas we need to send to the database
+	    	lBulletsDatasToSend[bullet.bulletId] = {ownerId: bullet.ownerId, x: bullet.x, y: bullet.y};
+	    }, this);
+	    
+
 	    // move the boat locally
 	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, sprite.body.velocity);
 	    
 	    // finaly we update the database with new position of the boat
 		Meteor.call("updateBoat", 
 					Meteor.user(), 
-					{x: sprite.body.x, y: sprite.body.y, angle: sprite.angle}
-					//{bX: bullet.x, bY: bullet.y}
+					{x: sprite.body.x, y: sprite.body.y, angle: sprite.angle},
+					lBulletsDatasToSend
 					);
-		// Meteor.call("updatelBullets");
 
 	}
 
@@ -248,7 +284,7 @@ Template.game.rendered = function() {
 // ------------------------------------------------------------------------
 
 
-
+ //// ICI QUE 9A COINCE
 	function fire(angle){
 		// if enough time has been spend since the last shot 
 		// and if there are enough lBullets in the pool
@@ -266,11 +302,11 @@ Template.game.rendered = function() {
 	        // make the bullet move in the direction wanted
 	        bullet.rotation = sprite.rotation;
 	        game.physics.arcade.velocityFromRotation(angle, 400, bullet.body.velocity);
+
+	        // lBulletsDatasToSend[bullet.bulletId] = {ownerId: bullet.ownerId, x: bullet.x, y: bullet.y};
 	    }
 
 	}
-
-
 
 }
 
