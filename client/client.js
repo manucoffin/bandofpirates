@@ -7,15 +7,17 @@ Accounts.ui.config({
 
 
 
-
 // move the player's boat locally
 // update the db with the new position of player's boat
 // update all distant players boats' position locally
 
-
-Meteor.subscribe('boats'); // get messages send from the server
-
 Template.game.rendered = function() {
+
+	console.log("game is ready");
+
+
+	Meteor.subscribe('boats'); // get messages send from the server
+
 
 	var dPlayers; // array of distant players
 	var map;
@@ -45,6 +47,7 @@ Template.game.rendered = function() {
 				if (boatsArray[i].owner != Meteor.user()._id)
 				{
 
+					console.log("database changed")
 					// then we loop in our local enemy array
 					dPlayers.forEach(function(enemy) {
 						// and if the id in local array and the one in the db match
@@ -54,6 +57,7 @@ Template.game.rendered = function() {
 							enemy.y = boatsArray[i].y;
 							enemy.angle = boatsArray[i].angle;
 						}
+
 					}, this);
 
 
@@ -102,6 +106,9 @@ Template.game.rendered = function() {
 
 
 	function preload(){
+
+		// prevent game pausing when loosing focus on browser
+		game.stage.disableVisibilityChange = true; 
 	
 		game.load.tilemap('worldTileMap', 'assets/worldMap.json', null, Phaser.Tilemap.TILED_JSON);
     	game.load.image('tiles', 'assets/tiles/super_mario.png');
@@ -119,6 +126,11 @@ Template.game.rendered = function() {
 
 	function create() {
 
+		// ---------------------------------------
+	    // 	World map settings:
+	    // ---------------------------------------
+
+
 		game.stage.backgroundColor = '#787878';
 	    map = game.add.tilemap('worldTileMap');
 	    map.addTilesetImage('SuperMarioTileset', 'tiles');
@@ -127,15 +139,20 @@ Template.game.rendered = function() {
 	    game.world.setBounds(0, 0, 1600, 1600);
 		game.physics.startSystem(Phaser.Physics.ARCADE);
 
+
 		// ---------------------------------------
 	    // 	Sprites settings:
 	    // ---------------------------------------
+
 
 	    // local player sprite
 		sprite = game.add.sprite(400, 300, 'player');
 	    game.physics.enable(sprite, Phaser.Physics.ARCADE);
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
+	    sprite.health = 100;
+	    sprite.body.collideWorldBounds=true;
+
 
 	    // distant players group
 	    dPlayers = game.add.group();
@@ -266,12 +283,22 @@ Template.game.rendered = function() {
 	    // move the boat locally
 	    game.physics.arcade.velocityFromAngle(sprite.angle, sprite.momentumVelocity, sprite.body.velocity);
 	    
-	    // finaly we update the database with new position of the boat
+	   	// detect collisions between:
+	    game.physics.arcade.overlap(lBullets, dPlayers, hitEnnemy, null, this); // local bullets and ennemy
+	    game.physics.arcade.overlap(dBullets, sprite, hitMyself, null, this); // distant bullets and current player
+	    // game.physics.arcade.collide(sprite, dPlayers); // two boats
+
+    	// finaly we update the database with new position of the boat
 		Meteor.call("updateBoat", 
-					Meteor.user(), 
-					{x: sprite.body.x, y: sprite.body.y, angle: sprite.angle},
-					lBulletsDatasToSend
-					);
+				Meteor.user(), 
+				{	
+					x: sprite.body.x, 
+					y: sprite.body.y, 
+					angle: sprite.angle, 
+					health: sprite.health
+				},
+				lBulletsDatasToSend
+				);
 
 	}
 
@@ -284,7 +311,6 @@ Template.game.rendered = function() {
 // ------------------------------------------------------------------------
 
 
- //// ICI QUE 9A COINCE
 	function fire(angle){
 		// if enough time has been spend since the last shot 
 		// and if there are enough lBullets in the pool
@@ -302,10 +328,25 @@ Template.game.rendered = function() {
 	        // make the bullet move in the direction wanted
 	        bullet.rotation = sprite.rotation;
 	        game.physics.arcade.velocityFromRotation(angle, 400, bullet.body.velocity);
-
-	        // lBulletsDatasToSend[bullet.bulletId] = {ownerId: bullet.ownerId, x: bullet.x, y: bullet.y};
 	    }
 
+	}
+
+
+	function hitEnnemy(bullet){
+		bullet.kill();
+		console.log("I hit him");
+	}
+
+	function hitMyself(bullet){
+		// bullet.kill();
+		console.log("I've been hit");
+		sprite.health += -1;
+		$("#debug").text(sprite.health);
+	}
+
+	function boatsCollision(){
+		console.log("boats collide")
 	}
 
 }
