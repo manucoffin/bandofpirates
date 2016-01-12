@@ -10,12 +10,25 @@
 
 	{{> game}}	
 	<!-- <section id="status-bar"></section> -->
-
+	{{> statusBar}}
 
 </body>
 
 <template name="game">
 	<section id="game-view">
 		<div id='debug' style="position:absolute; height: 20px; width:50px;"></div>
+		{{> menu}}
 	</section>
+</template>
+
+<template name="statusBar">
+	<div id="health-bar"></div>
+</template>
+
+<template name="menu">
+	<div id="menu">
+		<button id="start-btn">start</button>
+		<button>options</button>
+		<button>credits</button>
+	</div>
 </template>

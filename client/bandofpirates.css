@@ -1,1 +1,21 @@
 /* CSS declarations go here */
+
+
+*{
+	margin: 0;
+	padding: 0;
+}
+
+#health-bar{
+	height: 100px;
+	width: 500px;
+	background-color: yellow;
+
+}
+
+#menu{
+	position: absolute;
+	width: 500px;
+	height: 300px;
+	background-color: rgba(0,0,0,0.3);
+}

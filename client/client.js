@@ -1,22 +1,34 @@
+// What we do in this file :
+// when the game template is rendered, we initialize the game for local player
+// (set up the map, the variables...etc)
+// then, when the player move or do anything, we do the changes locally
+// and we send player's data to the database, so that each player infos are constantly updated
+// so we can get other players datas from the database, and display them locally
+
+
 Accounts.ui.config({
 	passwordSignupFields: "USERNAME_ONLY"
 });
 
+// subscription to server publications to pass datas between client/server via the databases
+Meteor.subscribe('boats');
+Meteor.subscribe('userStatus'); 
 
 
 
+function startGame() {
 
-
-// move the player's boat locally
-// update the db with the new position of player's boat
-// update all distant players boats' position locally
-
-Template.game.rendered = function() {
-
-	console.log("game is ready");
-
-
-	Meteor.subscribe('boats'); // get messages send from the server
+	var game = new Phaser.Game(
+		500, // size of the canvas created
+		500,
+		Phaser.AUTO,
+		'game-view', // div in which the canvas is appened
+		{ 
+			preload: preload,
+			create: create,
+			update: update
+		}
+	);
 
 
 	var dPlayers; // array of distant players
@@ -44,10 +56,10 @@ Template.game.rendered = function() {
 			for(var i=0; i<boatsArray.length; i++)
 			{
 				// if the boat is not owned by the current user
-				if (boatsArray[i].owner != Meteor.user()._id)
+				// and if the boat is not already dead
+				if (boatsArray[i].owner != Meteor.user()._id &&
+					boatsArray[i].dead != true)
 				{
-
-					console.log("database changed")
 					// then we loop in our local enemy array
 					dPlayers.forEach(function(enemy) {
 						// and if the id in local array and the one in the db match
@@ -56,6 +68,7 @@ Template.game.rendered = function() {
 							enemy.x = boatsArray[i].x;
 							enemy.y = boatsArray[i].y;
 							enemy.angle = boatsArray[i].angle;
+
 						}
 
 					}, this);
@@ -70,6 +83,7 @@ Template.game.rendered = function() {
 						}
 	
 					}, this);
+					
 				}
 			}
 		}
@@ -77,29 +91,36 @@ Template.game.rendered = function() {
 
 
 
+	// handle users connection/disconnection
+	Meteor.users.find({ "status.online": true }).observe({
+		// on user connection
+		added: function(user) {
+			console.log(user.username + " is online");
+		},
 
+		// on user disconnection
+		removed: function(user) {
+			console.log(user.username + " has logged off");
 
-// ------------------------------------------------------------------------
-//		THE GAME
-// ------------------------------------------------------------------------
+			// if the current user disconnect
+			if(user._id == Meteor.user()._id)
+			{
+				// remove his boat from the game
+				sprite.kill();
+				Meteor.call("killBoat", user);
+			}
 
-
-
-
-
-
-
-	var game = new Phaser.Game(
-		500, // size of the canvas created
-		500,
-		Phaser.AUTO,
-		'game-view', // div in which the canvas is appened
-		{ 
-			preload: preload,
-			create: create,
-			update: update
 		}
-	);
+	});
+
+
+// ------------------------------------------------------------------------
+// 		THE GAME
+// ------------------------------------------------------------------------
+
+
+
+
 
 
 
@@ -137,7 +158,7 @@ Template.game.rendered = function() {
 	    layer = map.createLayer('Background');
 	    layer.resizeWorld();
 	    game.world.setBounds(0, 0, 1600, 1600);
-		game.physics.startSystem(Phaser.Physics.ARCADE);
+		// game.physics.startSystem(Phaser.Physics.ARCADE);
 
 
 		// ---------------------------------------
@@ -339,7 +360,7 @@ Template.game.rendered = function() {
 	}
 
 	function hitMyself(bullet){
-		// bullet.kill();
+		bullet.kill();
 		console.log("I've been hit");
 		sprite.health += -1;
 		$("#debug").text(sprite.health);
@@ -354,7 +375,12 @@ Template.game.rendered = function() {
 
 
 
-
+Template.menu.events({
+	"click #start-btn": function(){
+		$("#menu").css("display", "none");
+		startGame();
+	}
+});
 
 
 
@@ -376,4 +402,8 @@ Template.body.events({
 		Meteor.call("clearCollection");
 	}
 
+});
+
+Template.statusBar.helpers({
+	//
 });
