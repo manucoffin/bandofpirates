@@ -57,8 +57,7 @@ function startGame() {
 			{
 				// if the boat is not owned by the current user
 				// and if the boat is not already dead
-				if (boatsArray[i].owner != Meteor.user()._id &&
-					boatsArray[i].dead != true)
+				if (boatsArray[i].owner != Meteor.user()._id)
 				{
 					// then we loop in our local enemy array
 					dPlayers.forEach(function(enemy) {
@@ -78,8 +77,21 @@ function startGame() {
 					dBullets.forEach(function(bullet) {
 						if (bullet.ownerId == boatsArray[i].owner)
 						{
-							bullet.x = boatsArray[i].bullets[bullet.bulletId].x;
-							bullet.y = boatsArray[i].bullets[bullet.bulletId].y;
+							// if the bullet is alive
+							if(boatsArray[i].bullets[bullet.bulletId].alive == true)
+							{
+								// we update its coordinates
+								bullet.x = boatsArray[i].bullets[bullet.bulletId].x;
+								bullet.y = boatsArray[i].bullets[bullet.bulletId].y;
+							}
+							// else if the bullet is dead
+							else
+							{
+								// we just put the bullet away 
+								// this is a temporary solution before I find out how to kill that bullet
+								bullet.x = -1000;
+								bullet.y = -1000;
+							}
 						}
 	
 					}, this);
@@ -101,15 +113,7 @@ function startGame() {
 		// on user disconnection
 		removed: function(user) {
 			console.log(user.username + " has logged off");
-
-			// if the current user disconnect
-			if(user._id == Meteor.user()._id)
-			{
-				// remove his boat from the game
-				sprite.kill();
-				Meteor.call("killBoat", user);
-			}
-
+			Meteor.call("killBoat", user);
 		}
 	});
 
@@ -177,6 +181,8 @@ function startGame() {
 
 	    // distant players group
 	    dPlayers = game.add.group();
+	    // dPlayers.setAll('anchor.x', -0.5);
+	    // dPlayers.setAll('anchor.y', -0.5);
 		dPlayers.enableBody = true;
 	    dPlayers.physicsBodyType = Phaser.Physics.ARCADE;
 
@@ -222,7 +228,6 @@ function startGame() {
 				// we add sprites to the group
 			    let dPlayerSprite = game.add.sprite(100, 100, 'player');
 			    dPlayerSprite.id = existingBoats[i].owner;
-			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayers.add(dPlayerSprite);
 
 			    // then we loop through bullets array of each boat
@@ -297,7 +302,11 @@ function startGame() {
 	    lBullets.forEach(function(bullet)
 	    {
 	    	// and we set the datas we need to send to the database
-	    	lBulletsDatasToSend[bullet.bulletId] = {ownerId: bullet.ownerId, x: bullet.x, y: bullet.y};
+	    	lBulletsDatasToSend[bullet.bulletId] = {ownerId: bullet.ownerId, 
+	    											x: bullet.x, 
+	    											y: bullet.y, 
+	    											alive: bullet.alive 
+	    										};
 	    }, this);
 	    
 
@@ -354,16 +363,18 @@ function startGame() {
 	}
 
 
-	function hitEnnemy(bullet){
-		bullet.kill();
+	function hitEnnemy(bullet, player){
+		// kill the bullet locally
+		bullet.kill();		
 		console.log("I hit him");
 	}
 
-	function hitMyself(bullet){
-		bullet.kill();
+	function hitMyself(player, bullet){
+		// bullet.kill();
 		console.log("I've been hit");
-		sprite.health += -1;
-		$("#debug").text(sprite.health);
+		// sprite.health += -1;
+		// $("#debug").text(sprite.health);
+		// Meteor.call("respawn", Meteor.user());
 	}
 
 	function boatsCollision(){
