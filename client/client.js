@@ -64,8 +64,8 @@ function startGame() {
 						// and if the id in local array and the one in the db match
 						if(enemy.id == boatsArray[i].owner) {
 							// we update the coordinates
-							enemy.x = boatsArray[i].x;
-							enemy.y = boatsArray[i].y;
+							enemy.x = boatsArray[i].x + enemy.width/2;
+							enemy.y = boatsArray[i].y + + enemy.height/2;
 							enemy.angle = boatsArray[i].angle;
 
 						}
@@ -96,6 +96,12 @@ function startGame() {
 	
 					}, this);
 					
+				}
+				// else if it is the boat of current user
+				else
+				{
+					// we just want to get health value that is updated by the enemies
+					sprite.health = boatsArray[i].health;
 				}
 			}
 		}
@@ -181,8 +187,6 @@ function startGame() {
 
 	    // distant players group
 	    dPlayers = game.add.group();
-	    // dPlayers.setAll('anchor.x', -0.5);
-	    // dPlayers.setAll('anchor.y', -0.5);
 		dPlayers.enableBody = true;
 	    dPlayers.physicsBodyType = Phaser.Physics.ARCADE;
 
@@ -227,6 +231,7 @@ function startGame() {
 			{
 				// we add sprites to the group
 			    let dPlayerSprite = game.add.sprite(100, 100, 'player');
+			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayerSprite.id = existingBoats[i].owner;
 			    dPlayers.add(dPlayerSprite);
 
@@ -318,14 +323,15 @@ function startGame() {
 	    game.physics.arcade.overlap(dBullets, sprite, hitMyself, null, this); // distant bullets and current player
 	    // game.physics.arcade.collide(sprite, dPlayers); // two boats
 
+	    $("#debug").text(sprite.health);
+
     	// finaly we update the database with new position of the boat
 		Meteor.call("updateBoat", 
 				Meteor.user(), 
-				{	
+				{
 					x: sprite.body.x, 
 					y: sprite.body.y, 
-					angle: sprite.angle, 
-					health: sprite.health
+					angle: sprite.angle
 				},
 				lBulletsDatasToSend
 				);
@@ -364,9 +370,11 @@ function startGame() {
 
 
 	function hitEnnemy(bullet, player){
-		// kill the bullet locally
-		bullet.kill();		
-		console.log("I hit him");
+		bullet.kill(); // kill the bullet locally
+		let enemy = Boats.find({'owner': player.id}).fetch(); // find the owner of the boat you just hit
+		let initialHealth = enemy[0].health; // get the old value of enemy health
+		let newHealth = initialHealth-1; // decrease it
+		Meteor.call('hurtEnemy', enemy[0], newHealth); // update the database
 	}
 
 	function hitMyself(player, bullet){
