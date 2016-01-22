@@ -1,5 +1,9 @@
 /* CSS declarations go here */
 
+@font-face {
+    font-family: 'tream';
+    src: url("assets/css/fonts/Treamd.ttf");
+}
 
 *{
 	margin: 0;
@@ -16,6 +20,40 @@
 #menu{
 	position: absolute;
 	width: 500px;
-	height: 300px;
-	background-color: rgba(0,0,0,0.3);
+	height: 450px;
+	background-image: url("assets/css/images/menu_bg.png");
+}
+
+#menu-btns{
+	display: block;
+	width: 350px;
+	height: 250px;
+	margin: 200px auto 0 auto;
+}
+
+#menu-btns button{
+	display: block;
+	width: 350px;
+	height: 50px;
+	background: transparent;
+	border: none;
+	font-family: 'tream';
+	font-size: 32px;
+}
+
+#menu-btns button:hover{
+	color: white;
+	cursor: pointer;
+	background-image: url("assets/css/images/select_flag.png");
+	background-position: center center;
+}
+
+#menu-btns #login-buttons{
+	display: block;
+	width: 350px;
+	height: 50px;
+	border: none;
+	font-family: 'tream';
+	font-size: 32px;
+	text-align: center;
 }

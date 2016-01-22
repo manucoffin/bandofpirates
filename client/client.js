@@ -18,6 +18,9 @@ Meteor.subscribe('userStatus');
 
 function startGame() {
 
+	console.log("starting game...");
+
+
 	var game = new Phaser.Game(
 		1000, // size of the canvas created
 		600,
@@ -586,31 +589,45 @@ function startGame() {
 
 
 
+
+
+
+
+
+
+
+
 Template.menu.events({
 	"click #start-btn": function(){
 		$("#menu").css("display", "none");
-		startGame();
+
+		// check if the looged in user already have a boat
+		let userId = Meteor.user()._id;
+		var boatExist = Boats.findOne({'owner': userId});
+
+		if(typeof boatExist == 'undefined')
+		{
+			Meteor.call("insertBoat");
+			startGame();
+		}
+		else
+		{
+			startGame();
+		}
 	}
 });
 
 
 
-
-
-
-// Template.body.rendered({});
-
-// Template.body.helpers({});
-
 Template.body.events({
-
-	"click #createBoatBtn": function(){
-		Meteor.call("insertBoat");
-
-	},
 
 	"click #dropCollectionBtn": function(){
 		Meteor.call("clearCollection");
+	},
+
+	"click #logout-btn":function(){
+		Meteor.logout();
+		// game.destroy();
 	}
 
 });
