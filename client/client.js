@@ -14,7 +14,7 @@ Accounts.ui.config({
 Meteor.subscribe('boats');
 Meteor.subscribe('userStatus'); 
 
-
+var globalGame;
 
 function startGame() {
 
@@ -33,6 +33,8 @@ function startGame() {
 			render: render
 		}
 	);
+
+	globalGame = game;
 
 
 	var dPlayers; // array of distant players
@@ -511,8 +513,6 @@ function startGame() {
 	    game.physics.arcade.overlap(dBullets, sprite, hitMyself, null, this); // distant bullets and current player
 	    // game.physics.arcade.collide(sprite, dPlayers); // two boats
 
-	    $("#debug").text(sprite.health);
-
 	
 
     	// finaly we update the database with new position of the boat
@@ -626,12 +626,15 @@ Template.body.events({
 	},
 
 	"click #logout-btn":function(){
+
 		Meteor.logout();
-		// game.destroy();
+
 	}
 
 });
 
 Template.statusBar.helpers({
-	//
+	'boatData': function(){
+		return Boats.find({'owner': Meteor.user()._id});
+	}
 });

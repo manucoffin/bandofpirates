@@ -10,25 +10,38 @@
 	padding: 0;
 }
 
-#health-bar{
+body{
+	background-color: rgb(48,31,8);
+}
+
+#game-view{
+	display: block;
+	width: 1000px;
+	margin: 20px auto 0 auto;
+}
+
+#status-bar{
 	height: 100px;
-	width: 500px;
+	width: 1000px;
+	margin: 0 auto 0 auto;
 	background-color: yellow;
 
 }
 
 #menu{
-	position: absolute;
 	width: 500px;
 	height: 450px;
+	margin: 0 auto 0 auto;
 	background-image: url("assets/css/images/menu_bg.png");
+	background-repeat: no-repeat;
+	padding: 200px 0 0 0;
 }
 
 #menu-btns{
-	display: block;
+	position: relative;
 	width: 350px;
 	height: 250px;
-	margin: 200px auto 0 auto;
+	margin: 0 auto 0 auto;
 }
 
 #menu-btns button{
@@ -56,4 +69,8 @@
 	font-family: 'tream';
 	font-size: 32px;
 	text-align: center;
+}
+
+#logout-btn{
+	display: inline-block;
 }

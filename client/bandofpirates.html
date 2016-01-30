@@ -3,15 +3,10 @@
 </head>
 <body>
 
-	{{#if currentUser}}
-		<button id="logout-btn">log out</button>
-	{{/if}}
-
 	<!-- <button id="dropCollectionBtn">drop boats collection</button> -->
 
 	{{> game}}	
 	<!-- <section id="status-bar"></section> -->
-	{{> statusBar}}
 
 </body>
 
@@ -21,15 +16,20 @@
 <template name="game">
 	<section id="game-view">
 		<div id='debug' style="position:absolute; height: 20px; width:50px;"></div>
-		{{> menu}}
 	</section>
+	{{> menu}}
+	{{> statusBar}}
 </template>
 
 
 
 
 <template name="statusBar">
-	<div id="health-bar"></div>
+	<div id="status-bar">
+		{{#each boatData}}
+			{{health}}
+		{{/each}}
+	</div>
 </template>
 
 
@@ -40,6 +40,7 @@
 		<div id="menu-btns">
 			{{#if currentUser}}
 				<button id="start-btn">start</button>
+				<button id="logout-btn">log out</button>
 			{{else}}
 				{{> loginButtons}}
 			{{/if}}
