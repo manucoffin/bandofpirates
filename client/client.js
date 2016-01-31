@@ -6,6 +6,23 @@
 // so we can get other players datas from the database, and display them locally
 
 
+
+
+// Override Meteor._debug to filter for custom msgs
+Meteor._debug = (function (super_meteor_debug) {
+  return function (error, info) {
+    if (!(info && _.has(info, 'msg')))
+      super_meteor_debug(error, info);
+  }
+})(Meteor._debug);
+
+
+
+
+
+
+
+
 Accounts.ui.config({
 	passwordSignupFields: "USERNAME_ONLY"
 });
@@ -13,8 +30,6 @@ Accounts.ui.config({
 // subscription to server publications to pass datas between client/server via the databases
 Meteor.subscribe('boats');
 Meteor.subscribe('userStatus'); 
-
-var globalGame;
 
 function startGame() {
 
@@ -34,9 +49,6 @@ function startGame() {
 		}
 	);
 
-	globalGame = game;
-
-
 	var dPlayers; // array of distant players
 	var map;
 	var layer;
@@ -52,108 +64,106 @@ function startGame() {
 	var query = Boats.find({});	
 	var existingBoats = query.fetch(); // all the boats stored in the database
 
-	var handle = query.observeChanges({
-		// callback each time the boats db changes
-		changed: function () {
 
-			// need to declare the array again because it is not accessible from here
-			let boatsArray = query.fetch();
+	// Attach an handler for boats datas messages
+	Streamy.on('boatsDatas', function(d) {
+		// if the emmiter of message is not the client itself
+		if(d.data.userId != Meteor.user()._id)
+		{
+			// then we loop in our local enemy array
+			dPlayers.forEach(function(enemy) {
+				// and if the id in local array and the one in the db match
+				if(enemy.id == d.data.userId) {
+					// we update the coordinates
+					enemy.x = d.data.x + enemy.width/2;
+					enemy.y = d.data.y + enemy.height/2;
+					enemy.angle = d.data.angle;
 
-			// loop through all the boats into the database
-			for(var i=0; i<boatsArray.length; i++)
-			{
-				// if the boat is not owned by the current user
-				// and if the boat is not already dead
-				if (boatsArray[i].owner != Meteor.user()._id)
-				{
-					// then we loop in our local enemy array
-					dPlayers.forEach(function(enemy) {
-						// and if the id in local array and the one in the db match
-						if(enemy.id == boatsArray[i].owner) {
-							// we update the coordinates
-							enemy.x = boatsArray[i].x + enemy.width/2;
-							enemy.y = boatsArray[i].y + + enemy.height/2;
-							enemy.angle = boatsArray[i].angle;
+					// change sprite image depending on the angle
+				    switch (enemy.angle){
+			    	case 0:
+			    		enemy.loadTexture('right', 0);
+			    		// enemy.body.setSize(50, 20, 0, 20);
+			    		break;
 
-							// change sprite image depending on the angle
-						    switch (enemy.angle){
-						    	case 0:
-						    		enemy.loadTexture('right', 0);
-						    		break;
+			    	case 45:
+			    		enemy.loadTexture('bottomRight', 0);
+			    		// enemy.body.setSize(40, 30, 3, 15);
+			    		break;
 
-						    	case 45:
-						    		enemy.loadTexture('bottomRight', 0);
-						    		break;
+			    	case 90:
+			    		enemy.loadTexture('bottom', 0);
+			    		// enemy.body.setSize(25, 30, 0, 10);
+			    		break;
 
-						    	case 90:
-						    		enemy.loadTexture('bottom', 0);
-						    		break;
+			    	case 135:
+			    		enemy.loadTexture('bottomLeft', 0);
+			    		// enemy.body.setSize(45, 35, 0, 10);
+			    		break;
 
-						    	case 135:
-						    		enemy.loadTexture('bottomLeft', 0);
-						    		break;
+			    	case -180:
+			    		enemy.loadTexture('left', 0);
+			    		// enemy.body.setSize(50, 20, 0, 20);
+			    		break;	
 
-						    	case -180:
-						    		enemy.loadTexture('left', 0);
-						    		break;	
+			    	case -45:
+			    		enemy.loadTexture('topRight', 0);
+			    		// enemy.body.setSize(40, 30, 3, 15);
+			    		break;
 
-						    	case -45:
-						    		enemy.loadTexture('topRight', 0);
-						    		break;
+			    	case -90:
+			    		enemy.loadTexture('top', 0);
+			    		// enemy.body.setSize(25, 30, 0, 10);
+			    		break;
 
-						    	case -90:
-						    		enemy.loadTexture('top', 0);
-						    		break;
+			    	case -135:
+			    		enemy.loadTexture('topLeft', 0);
+			    		// enemy.body.setSize(45, 35, 0, 10);
+			    		break;
 
-						    	case -135:
-						    		enemy.loadTexture('topLeft', 0);
-						    		break;
+			    	case -180:
+			    		enemy.loadTexture('left', 0);
+			    		// enemy.body.setSize(50, 20, 0, 20);
+			    		break;
 
-						    	case -180:
-						    		enemy.loadTexture('left', 0);
-						    		break;
+			    	default:
+			    		enemy.loadTexture('right', 0);
+			    		// enemy.body.setSize(50, 20, 0, 20);
+			    		break;
+			    }
 
-						    	default:
-						    		enemy.loadTexture('right', 0);
-						    		break;
-						    }
-
-						}
-
-					}, this);
-
-
-					// we also loop in the bullets array of each boat
-					dBullets.forEach(function(bullet) {
-						if (bullet.ownerId == boatsArray[i].owner)
-						{
-							// if the bullet is alive
-							if(boatsArray[i].bullets[bullet.bulletId].alive == true)
-							{
-								// we update its coordinates
-								bullet.x = boatsArray[i].bullets[bullet.bulletId].x;
-								bullet.y = boatsArray[i].bullets[bullet.bulletId].y;
-							}
-							// else if the bullet is dead
-							else
-							{
-								// we just put the bullet away 
-								// this is a temporary solution before I find out how to kill that bullet
-								bullet.x = -1000;
-								bullet.y = -1000;
-							}
-						}
-	
-					}, this);
-					
 				}
-				// else if it is the boat of current user
-				else
+
+			}, this);
+
+
+
+
+			// we also loop in the bullets array of each boat
+			dBullets.forEach(function(bullet) {
+				if (bullet.ownerId == d.data.userId)
 				{
-					// we just want to get health value that is updated by the enemies
-					sprite.health = boatsArray[i].health;
+					// if the bullet is alive
+					if(d.data.bullets[bullet.bulletId].alive == true)
+					{
+						// we update its coordinates
+						bullet.x = d.data.bullets[bullet.bulletId].x;
+						bullet.y = d.data.bullets[bullet.bulletId].y;
+					}
+					// else if the bullet is dead
+					else
+					{
+						// we just put the bullet away 
+						// this is a temporary solution before I find out how to kill that bullet
+						bullet.x = -1000;
+						bullet.y = -1000;
+					}
 				}
-			}
+
+			}, this);
+
+
+
 		}
 	});
 
@@ -254,7 +264,7 @@ function startGame() {
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
 	    sprite.health = 100;
-	    sprite.body.setSize(55, 20, 0, 20);
+	    // sprite.body.setSize(55, 20, 0, 20);
 	    sprite.body.collideWorldBounds=true;
 
 	    var rotateSprite = sprite.animations.add('rotateSprite');
@@ -264,6 +274,7 @@ function startGame() {
 	    dPlayers = game.add.group();
 		dPlayers.enableBody = true;
 	    dPlayers.physicsBodyType = Phaser.Physics.ARCADE;
+
 
 	    // local bullets group
 	    lBullets = game.add.group();
@@ -323,7 +334,6 @@ function startGame() {
 			    }
 			}
 		}
-
 
 
 	    // to use the keyboard
@@ -408,6 +418,8 @@ function startGame() {
 
 	function update() {
 
+
+
 		sprite.body.velocity.x = 0;
 	    sprite.body.velocity.y = 0;
 	    sprite.body.angularVelocity = 0;
@@ -428,52 +440,52 @@ function startGame() {
 	    switch (sprite.angle){
 	    	case 0:
 	    		sprite.loadTexture('right', 0);
-	    		sprite.body.setSize(50, 20, 0, 20);
+	    		// sprite.body.setSize(50, 20, 0, 20);
 	    		break;
 
 	    	case 45:
 	    		sprite.loadTexture('bottomRight', 0);
-	    		sprite.body.setSize(40, 30, 3, 15);
+	    		// sprite.body.setSize(40, 30, 3, 15);
 	    		break;
 
 	    	case 90:
 	    		sprite.loadTexture('bottom', 0);
-	    		sprite.body.setSize(25, 30, 0, 10);
+	    		// sprite.body.setSize(25, 30, 0, 10);
 	    		break;
 
 	    	case 135:
 	    		sprite.loadTexture('bottomLeft', 0);
-	    		sprite.body.setSize(45, 35, 0, 10);
+	    		// sprite.body.setSize(45, 35, 0, 10);
 	    		break;
 
 	    	case -180:
 	    		sprite.loadTexture('left', 0);
-	    		sprite.body.setSize(50, 20, 0, 20);
+	    		// sprite.body.setSize(50, 20, 0, 20);
 	    		break;	
 
 	    	case -45:
 	    		sprite.loadTexture('topRight', 0);
-	    		sprite.body.setSize(40, 30, 3, 15);
+	    		// sprite.body.setSize(40, 30, 3, 15);
 	    		break;
 
 	    	case -90:
 	    		sprite.loadTexture('top', 0);
-	    		sprite.body.setSize(25, 30, 0, 10);
+	    		// sprite.body.setSize(25, 30, 0, 10);
 	    		break;
 
 	    	case -135:
 	    		sprite.loadTexture('topLeft', 0);
-	    		sprite.body.setSize(45, 35, 0, 10);
+	    		// sprite.body.setSize(45, 35, 0, 10);
 	    		break;
 
 	    	case -180:
 	    		sprite.loadTexture('left', 0);
-	    		sprite.body.setSize(50, 20, 0, 20);
+	    		// sprite.body.setSize(50, 20, 0, 20);
 	    		break;
 
 	    	default:
 	    		sprite.loadTexture('right', 0);
-	    		sprite.body.setSize(50, 20, 0, 20);
+	    		// sprite.body.setSize(50, 20, 0, 20);
 	    		break;
 	    }
 
@@ -515,16 +527,31 @@ function startGame() {
 
 	
 
-    	// finaly we update the database with new position of the boat
-		Meteor.call("updateBoat", 
-				Meteor.user(), 
-				{
-					x: sprite.body.x, 
-					y: sprite.body.y, 
-					angle: sprite.angle
-				},
-				lBulletsDatasToSend
-				);
+    	
+		// Meteor.call("updateBoat", 
+		// 		Meteor.user(), 
+		// 		{
+		// 			x: sprite.body.x, 
+		// 			y: sprite.body.y, 
+		// 			angle: sprite.angle
+		// 		},
+		// 		lBulletsDatasToSend
+		// 		);
+
+		// finaly we update the database with new position of the boat
+		// Send a message to all connected sessions (Client & server)
+		Streamy.broadcast('boatsDatas', { data: 
+			{
+				userId: Meteor.user()._id,
+				username: Meteor.user().username,
+				x: sprite.body.x, 
+				y: sprite.body.y,
+				width: sprite.width,
+				height: sprite.height,
+				angle: sprite.angle,
+				bullets: lBulletsDatasToSend
+			}
+		});
 
 	}
 
@@ -534,7 +561,7 @@ function startGame() {
 	function render() {
 
 	    game.debug.spriteInfo(sprite, 32, 32);
-	    // game.debug.body(sprite); 
+	    game.debug.body(sprite); 
 	}
 
 
@@ -638,3 +665,4 @@ Template.statusBar.helpers({
 		return Boats.find({'owner': Meteor.user()._id});
 	}
 });
+
