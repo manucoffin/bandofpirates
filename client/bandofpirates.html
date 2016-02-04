@@ -6,7 +6,6 @@
 	<!-- <button id="dropCollectionBtn">drop boats collection</button> -->
 
 	{{> game}}	
-	<!-- <section id="status-bar"></section> -->
 
 </body>
 
@@ -15,7 +14,6 @@
 
 <template name="game">
 	<section id="game-view">
-		<div id='debug' style="position:absolute; height: 20px; width:50px;"></div>
 	</section>
 	{{> menu}}
 	{{> statusBar}}
@@ -26,9 +24,10 @@
 
 <template name="statusBar">
 	<div id="status-bar">
-		{{#each boatData}}
-			{{health}}
-		{{/each}}
+		<p id="health">100</p>
+		<p id="fight-logs"></p>
+		<p id="fireside"></p>
+		<p id="debug"></p>
 	</div>
 </template>
 
@@ -48,5 +47,14 @@
 			<button>options</button>
 			<button>credits</button>
 		</div>
+	</div>
+</template>
+
+
+
+<template name="credits">
+	<div id="credits">
+		<p>This game was made by Manuel Coffin</p>
+		<p>You can find the full source code <a href="https://github.com/manucoffin/bandofpirates.git">here</a></p>
 	</div>
 </template>

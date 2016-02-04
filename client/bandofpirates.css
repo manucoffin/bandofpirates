@@ -21,6 +21,7 @@ body{
 }
 
 #status-bar{
+	display: none;
 	height: 100px;
 	width: 1000px;
 	margin: 0 auto 0 auto;

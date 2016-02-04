@@ -29,7 +29,7 @@ Accounts.ui.config({
 
 // subscription to server publications to pass datas between client/server via the databases
 Meteor.subscribe('boats');
-Meteor.subscribe('userStatus'); 
+Meteor.subscribe('userStatus');
 
 function startGame() {
 
@@ -55,7 +55,7 @@ function startGame() {
 	var sprite; // local player
 	var cursors;
 	var lBullets; // LOCAL bullets
-	var fireRate = 100;
+	var fireRate = Boats.find({'owner': Meteor.user()._id}).fireRate;
 	var nextFire = 0;
 	var lBulletsDatasToSend = []; // an array of useful datas about bullets that we send in the database
 	var cloudsGroup;
@@ -167,6 +167,45 @@ function startGame() {
 		}
 	});
 
+	// when a player hits another
+	Streamy.on("hitDatas", function(d){
+		// we check if the curent user have been hit
+		if(d.data.target == Meteor.user()._id)
+		{
+			$("#fight-logs").text(d.data.username + " hit you!");
+			if(sprite.health > d.data.damages)
+			{
+				// decrease healt
+				sprite.health += -d.data.damages;
+				$("#health").text(sprite.health);
+			}
+			else
+			{
+				// DEATH
+				sprite.x = 100;
+				sprite.y = 100;
+				sprite.health = 100;
+				// send gold to enemy
+			}
+		}
+	});
+
+
+
+	Streamy.on('clouds_datas', function(d){
+
+		for(var i=0; i<cloudsGroup.children.length; i++)
+		{
+			cloudsGroup.children[i].x = d.positions[i].x;
+			cloudsGroup.children[i].y = d.positions[i].y;
+		}
+	});
+
+
+
+
+
+
 
 
 	// handle users connection/disconnection
@@ -179,10 +218,25 @@ function startGame() {
 		// on user disconnection
 		removed: function(user) {
 			console.log(user.username + " has logged off");
+
+
+			// change the coordinates of the player that has disconnected 
+			
+			//on the database
 			Meteor.call("killBoat", user);
+
+			// and locally
+			dPlayers.forEach(function(enemy) {
+				// find the user who have disconnect
+				if(enemy.id == user._id) {
+					// send him away
+					enemy.x = -1000;
+					enemy.y = -1000;
+				}
+			}, this);
 		}
 	});
-
+	
 
 // ------------------------------------------------------------------------
 // 		THE GAME
@@ -256,7 +310,7 @@ function startGame() {
 
 	    
 
-
+	    // get where the boat was on its previous sessions
 
 	    // local player sprite
 		sprite = game.add.sprite(100, 100, 'right');
@@ -264,7 +318,8 @@ function startGame() {
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
 	    sprite.health = 100;
-	    // sprite.body.setSize(55, 20, 0, 20);
+	    sprite.fireSide = 90;
+	    sprite.body.setSize(40, 40, 5, 5);
 	    sprite.body.collideWorldBounds=true;
 
 	    var rotateSprite = sprite.animations.add('rotateSprite');
@@ -316,7 +371,7 @@ function startGame() {
 			if ( existingBoats[i].owner != Meteor.user()._id )
 			{
 				// we add sprites to the group
-			    let dPlayerSprite = game.add.sprite(100, 100, 'right');
+			    let dPlayerSprite = game.add.sprite(-1000, -1000, 'right');
 			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayerSprite.id = existingBoats[i].owner;
 			    dPlayers.add(dPlayerSprite);
@@ -325,7 +380,7 @@ function startGame() {
 			    for(var j=0; j<existingBoats[i].bullets.length; j++)
 			    {
 			    	// and we create the bullets sprites
-			    	let dBulletSprite = game.add.sprite(100, 100, 'bullet');
+			    	let dBulletSprite = game.add.sprite(-1000, -1000, 'bullet');
 				    dBulletSprite.ownerId = existingBoats[i].owner;
 				    dBulletSprite.bulletId = j;
 				    dBulletSprite.anchor.setTo(0.5, 0.5);
@@ -361,6 +416,20 @@ function startGame() {
 	    }, this);
 
 
+	    fireSideLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
+	    fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
+
+	    fireSideLeftButton.onDown.add(function(){
+	    	sprite.fireSide = -90;
+	    	$("#fireside").text("LEFT");
+	    }, this);
+
+	    fireSideRightButton.onDown.add(function(){
+	    	sprite.fireSide = 90;
+	    	$("#fireside").text("RIGHT");
+	    }, this);
+
+
 
 	    // ---------------------------------------
 	    // 	Other Features settings:
@@ -385,25 +454,6 @@ function startGame() {
 	    	let cloudSprite = game.add.sprite(Math.random()*1600, Math.random()*1600, 'cloud2');
 	    	cloudsGroup.add(cloudSprite);
 	    }
-
-
-	    // Particles System 
-
-	 //    particleEmitter = game.add.emitter(0, 0, 1000);
-	 //    particleEmitter.makeParticles('particle');
-
-	 //    // attach emitter to the sprite
-	 //    sprite.addChild(particleEmitter)
-
-	 //    particleEmitter.y = 0;
-  // 		particleEmitter.x = 0;
-
-  // 		particleEmitter.lifespan = 1000;
-		// particleEmitter.maxParticleSpeed = new Phaser.Point(-100,50);
-		// particleEmitter.minParticleSpeed = new Phaser.Point(-200,-50);
-	 //    // explode, lifespan, frequency, quantity
-	    // particleEmitter.start(false, 5000, 20, 500);
-
 
 
 	}
@@ -522,21 +572,8 @@ function startGame() {
 	    
 	   	// detect collisions between:
 	    game.physics.arcade.overlap(lBullets, dPlayers, hitEnnemy, null, this); // local bullets and ennemy
-	    game.physics.arcade.overlap(dBullets, sprite, hitMyself, null, this); // distant bullets and current player
 	    // game.physics.arcade.collide(sprite, dPlayers); // two boats
 
-	
-
-    	
-		// Meteor.call("updateBoat", 
-		// 		Meteor.user(), 
-		// 		{
-		// 			x: sprite.body.x, 
-		// 			y: sprite.body.y, 
-		// 			angle: sprite.angle
-		// 		},
-		// 		lBulletsDatasToSend
-		// 		);
 
 		// finaly we update the database with new position of the boat
 		// Send a message to all connected sessions (Client & server)
@@ -560,8 +597,9 @@ function startGame() {
 	// DEBUG
 	function render() {
 
-	    game.debug.spriteInfo(sprite, 32, 32);
-	    game.debug.body(sprite); 
+	    // game.debug.spriteInfo(sprite, 32, 32);
+	    // game.debug.body(sprite);
+
 	}
 
 
@@ -585,35 +623,54 @@ function startGame() {
 	        let bullet = lBullets.getFirstDead();
 
 	        // and bring it back to life at sprite position
-	        bullet.reset(sprite.x - 8, sprite.y);
+	        bullet.reset(sprite.x, sprite.y);
 
 	        // make the bullet move in the direction wanted
 	        bullet.rotation = sprite.rotation;
-	        game.physics.arcade.velocityFromRotation(angle, 400, bullet.body.velocity);
+	        // $("#debug").text(180 * (angle) / Math.PI);
+	        // send the bullet perpendicularly of the angle of boat
+	        // left or right depending on the fireside selected
+	        game.physics.arcade.velocityFromRotation(angle+(Math.PI*sprite.fireSide/180), 400, bullet.body.velocity);
 	    }
-
 	}
 
 
 	function hitEnnemy(bullet, player){
 		bullet.kill(); // kill the bullet locally
-		let enemy = Boats.find({'owner': player.id}).fetch(); // find the owner of the boat you just hit
-		let initialHealth = enemy[0].health; // get the old value of enemy health
-		let newHealth = initialHealth-1; // decrease it
-		Meteor.call('hurtEnemy', enemy[0], newHealth); // update the database
-	}
-
-	function hitMyself(player, bullet){
-		console.log("I've been hit");
+		Streamy.broadcast('hitDatas', { data: 
+			{
+				userId: Meteor.user()._id,
+				username: Meteor.user().username,
+				target: player.id,
+				damages: 10
+			}
+		});
 	}
 
 	function boatsCollision(){
 		console.log("boats collide")
 	}
 
+
+
+
+
+
+	// Save datas every 10 seconds in the database
+	let timer = setInterval(function(){
+		Meteor.call("updateBoat", 
+				Meteor.user(), 
+				{
+					x: sprite.body.x, 
+					y: sprite.body.y, 
+					angle: sprite.angle,
+					health: sprite.health
+				},
+				lBulletsDatasToSend
+				);
+	}, 10000);
+
 }
-
-
 
 
 
@@ -627,6 +684,7 @@ function startGame() {
 Template.menu.events({
 	"click #start-btn": function(){
 		$("#menu").css("display", "none");
+		$("#status-bar").css("display", "block");
 
 		// check if the looged in user already have a boat
 		let userId = Meteor.user()._id;
