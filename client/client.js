@@ -55,11 +55,11 @@ function startGame() {
 	var sprite; // local player
 	var cursors;
 	var lBullets; // LOCAL bullets
-	var fireRate = Boats.find({'owner': Meteor.user()._id}).fireRate;
+	var fireRate = 1000;//Boats.find({'owner': Meteor.user()._id}).fireRate;
 	var nextFire = 0;
 	var lBulletsDatasToSend = []; // an array of useful datas about bullets that we send in the database
 	var cloudsGroup;
-	// var particleEmitter;
+
 
 	var query = Boats.find({});	
 	var existingBoats = query.fetch(); // all the boats stored in the database
@@ -75,8 +75,8 @@ function startGame() {
 				// and if the id in local array and the one in the db match
 				if(enemy.id == d.data.userId) {
 					// we update the coordinates
-					enemy.x = d.data.x + enemy.width/2;
-					enemy.y = d.data.y + enemy.height/2;
+					enemy.x = d.data.x + enemy.width/4;
+					enemy.y = d.data.y + enemy.height/4;
 					enemy.angle = d.data.angle;
 
 					// change sprite image depending on the angle
@@ -169,27 +169,62 @@ function startGame() {
 
 	// when a player hits another
 	Streamy.on("hitDatas", function(d){
+
 		// we check if the curent user have been hit
 		if(d.data.target == Meteor.user()._id)
 		{
+			// inform the player that he has been hit
 			$("#fight-logs").text(d.data.username + " hit you!");
+
+			// if the player still has health then
 			if(sprite.health > d.data.damages)
 			{
-				// decrease healt
+				// we decrease his health
 				sprite.health += -d.data.damages;
-				$("#health").text(sprite.health);
+				$("#health").text("health : "+ sprite.health);
+
 			}
 			else
 			{
-				// DEATH
+				// the player is dead so
+				// we reset his position and health
 				sprite.x = 100;
 				sprite.y = 100;
 				sprite.health = 100;
-				// send gold to enemy
+				
+				// we decrese his gold amount
+				var goldLost = Math.round(sprite.gold*0.25);
+				sprite.gold += -goldLost;
+
+				// we update his gold in the status bar
+				$("#gold").text("gold : "+ sprite.gold);
+
+				// broadcast a message "gold transfer" between the players
+				Streamy.broadcast('goldTransfer', { data: 
+					{
+						senderId: Meteor.user()._id,
+						senderUsername: Meteor.user().username,
+						target: d.data.userId,
+						value: goldLost
+					}
+				});
+
 			}
 		}
 	});
 
+
+	Streamy.on("goldTransfer", function(d){
+		// check if the gold transfer concerns us
+		if(d.data.target == Meteor.user()._id)
+		{
+			// update the gold amount with the gold stolen
+			sprite.gold += d.data.value; // gold stolen
+			sprite.gold += 100; // fixed reward to create gold in the game
+			$("#gold").text("gold : "+ sprite.gold); // update the status bar
+		}
+
+	});
 
 
 	Streamy.on('clouds_datas', function(d){
@@ -318,6 +353,8 @@ function startGame() {
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
 	    sprite.health = 100;
+	    sprite.gold = Boats.find({'owner': Meteor.user()._id}).fetch()[0].gold;
+
 	    sprite.fireSide = 90;
 	    sprite.body.setSize(40, 40, 5, 5);
 	    sprite.body.collideWorldBounds=true;
@@ -476,6 +513,8 @@ function startGame() {
 
 	    // enable collision between player and tiles
 	    game.physics.arcade.collide(sprite, layer);
+	    game.physics.arcade.collide(lBullets, layer, killBullet);
+	    game.physics.arcade.collide(sprite, dPlayers, boatsCollision);
 
 
 	    // each loop we decrease the speed of the boat to create the momentum effect
@@ -627,7 +666,6 @@ function startGame() {
 
 	        // make the bullet move in the direction wanted
 	        bullet.rotation = sprite.rotation;
-	        // $("#debug").text(180 * (angle) / Math.PI);
 	        // send the bullet perpendicularly of the angle of boat
 	        // left or right depending on the fireside selected
 	        game.physics.arcade.velocityFromRotation(angle+(Math.PI*sprite.fireSide/180), 400, bullet.body.velocity);
@@ -647,12 +685,14 @@ function startGame() {
 		});
 	}
 
-	function boatsCollision(){
-		console.log("boats collide")
+
+	function killBullet(bullet, layer){
+		bullet.kill();
 	}
 
-
-
+	function boatsCollision(player, dplayer){
+		// Decrese health
+	}
 
 
 
@@ -664,7 +704,8 @@ function startGame() {
 					x: sprite.body.x, 
 					y: sprite.body.y, 
 					angle: sprite.angle,
-					health: sprite.health
+					health: sprite.health,
+					gold: sprite.gold
 				},
 				lBulletsDatasToSend
 				);

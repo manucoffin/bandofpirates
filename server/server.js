@@ -53,4 +53,4 @@ let serverUpdate = setInterval(function(){
 		}
 	);
 
-}, 1000/24);
+}, 300);

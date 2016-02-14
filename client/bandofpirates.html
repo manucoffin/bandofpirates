@@ -25,6 +25,11 @@
 <template name="statusBar">
 	<div id="status-bar">
 		<p id="health">100</p>
+		<p id="gold">
+			{{#each boatData}}
+				{{gold}}
+			{{/each}}
+		</p>
 		<p id="fight-logs"></p>
 		<p id="fireside"></p>
 		<p id="debug"></p>
