@@ -17,6 +17,7 @@
 	</section>
 	{{> menu}}
 	{{> statusBar}}
+	{{> upgradePannel}}
 </template>
 
 
@@ -33,6 +34,8 @@
 		<p id="fight-logs"></p>
 		<p id="fireside"></p>
 		<p id="debug"></p>
+
+		<button id="upgrade">UPGRADE</button>
 	</div>
 </template>
 
@@ -54,6 +57,49 @@
 		</div>
 	</div>
 </template>
+
+
+
+
+
+<template name="upgradePannel">
+	<div id="upgrade-pannel">
+		<p>
+			health : 
+			{{#each boatData}}
+				{{health}}
+			{{/each}}
+		</p>
+		<button id="health-btn" class="plus-btn">+</button>
+
+		<p>
+			damages : 
+			{{#each boatData}}
+				{{damages}}
+			{{/each}}
+		</p>
+		<button id="damages-btn" class="plus-btn">+</button>
+
+		<p>
+			fire rate : 
+			{{#each boatData}}
+				{{fireRate}}
+			{{/each}}
+		</p>
+		<button id="firerate-btn" class="plus-btn">+</button>
+
+		<p>
+			speed : 
+			{{#each boatData}}
+				{{speed}}
+			{{/each}}
+		</p>
+		<button id="speed-btn" class="plus-btn">+</button>
+
+		<button id="send-btn">OK</button>
+	</div>
+</template>
+
 
 
 

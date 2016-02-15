@@ -765,3 +765,35 @@ Template.statusBar.helpers({
 	}
 });
 
+
+Template.upgradePannel.helpers({
+	'boatData': function(){
+		return Boats.find({'owner': Meteor.user()._id});
+	}
+});
+
+Template.upgradePannel.events({
+	"click .plus-btn": function(ev){
+		stats = {
+			health: 0,
+			fireRate: 0,
+			damages: 0,
+			speed: 0
+		}
+
+		if(ev.target.id == "health-btn")
+			stats.health = 5;
+		else if(ev.target.id == "firerate-btn")
+			stats.fireRate = 100;
+		else if(ev.target.id == "damages-btn")
+			stats.damages = 1;
+		else if(ev.target.id == "speed-btn")
+			stats.speed = 1;
+
+		Meteor.call("upgradeBoat", Meteor.user()._id, stats);
+
+		// SPEND GOLD
+	}
+
+});
+
