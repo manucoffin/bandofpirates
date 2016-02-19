@@ -63,6 +63,37 @@ function startGame() {
 
 	var query = Boats.find({});	
 	var existingBoats = query.fetch(); // all the boats stored in the database
+	var myBoat = Boats.find({'owner': Meteor.user()._id}); // get only the boat of current user
+
+
+
+
+
+
+
+	// we need to observe the changes in the database: 
+	// each time something change we update the sprite locally
+	var handle = myBoat.observeChanges({
+		changed: function () {
+			// need to declare the array again because it is not accessible from here
+ 			let myBoatData = myBoat.fetch();
+
+			sprite.maxHealth = myBoatData[0].maxHealth;
+			sprite.fireRate = myBoatData[0].fireRate;
+			sprite.damages = myBoatData[0].damages;
+			sprite.speed = myBoatData[0].speed;
+
+			$("#debug").text(sprite.fireRate + " ____ " +sprite.maxHealth + " ____ "+sprite.damages + " ____ "+sprite.speed)
+		}
+	})
+
+
+
+
+
+
+
+
 
 
 	// Attach an handler for boats datas messages
@@ -190,14 +221,13 @@ function startGame() {
 				// we reset his position and health
 				sprite.x = 100;
 				sprite.y = 100;
-				sprite.health = 100;
+				sprite.health = sprite.maxHealth;
 				
 				// we decrese his gold amount
 				var goldLost = Math.round(sprite.gold*0.25);
 				sprite.gold += -goldLost;
 
-				// we update his gold in the status bar
-				$("#gold").text("gold : "+ sprite.gold);
+				Meteor.call("updateGold", Meteor.user()._id, -goldLost); // update the database
 
 				// broadcast a message "gold transfer" between the players
 				Streamy.broadcast('goldTransfer', { data: 
@@ -219,9 +249,9 @@ function startGame() {
 		if(d.data.target == Meteor.user()._id)
 		{
 			// update the gold amount with the gold stolen
-			sprite.gold += d.data.value; // gold stolen
-			sprite.gold += 100; // fixed reward to create gold in the game
-			$("#gold").text("gold : "+ sprite.gold); // update the status bar
+			let ammount = d.data.value + 100; // gold stolen + fixed reward to create gold in the game
+			sprite.gold += ammount; // update locally
+			Meteor.call("updateGold", Meteor.user()._id, ammount); // update the database
 		}
 
 	});
@@ -347,19 +377,26 @@ function startGame() {
 
 	    // get where the boat was on its previous sessions
 
-	    // local player sprite
+	    // local player sprite settings
 		sprite = game.add.sprite(100, 100, 'right');
 	    game.physics.enable(sprite, Phaser.Physics.ARCADE);
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
-	    sprite.health = 100;
-	    sprite.gold = Boats.find({'owner': Meteor.user()._id}).fetch()[0].gold;
-
 	    sprite.fireSide = 90;
 	    sprite.body.setSize(40, 40, 5, 5);
 	    sprite.body.collideWorldBounds=true;
 
+	    sprite.maxHealth = Boats.find({'owner': Meteor.user()._id}).fetch()[0].maxHealth;
+	    sprite.health = sprite.maxHealth;
+	    sprite.gold = Boats.find({'owner': Meteor.user()._id}).fetch()[0].gold;
+	    sprite.damages = Boats.find({'owner': Meteor.user()._id}).fetch()[0].damages;
 	    var rotateSprite = sprite.animations.add('rotateSprite');
+	    
+	    // update the status bar
+	    $("#health").text("health : "+ sprite.maxHealth);
+
+
+
 
 
 	    // distant players group
@@ -680,7 +717,7 @@ function startGame() {
 				userId: Meteor.user()._id,
 				username: Meteor.user().username,
 				target: player.id,
-				damages: 10
+				damages: sprite.damages
 			}
 		});
 	}
@@ -691,7 +728,7 @@ function startGame() {
 	}
 
 	function boatsCollision(player, dplayer){
-		// Decrese health
+		// Decrease health
 	}
 
 
@@ -704,8 +741,7 @@ function startGame() {
 					x: sprite.body.x, 
 					y: sprite.body.y, 
 					angle: sprite.angle,
-					health: sprite.health,
-					gold: sprite.gold
+					health: sprite.health // do not confuse current health and max health
 				},
 				lBulletsDatasToSend
 				);
@@ -774,25 +810,58 @@ Template.upgradePannel.helpers({
 
 Template.upgradePannel.events({
 	"click .plus-btn": function(ev){
+
+		let currentStats = Boats.find({'owner': Meteor.user()._id}).fetch()[0];
+		let amount = 0;
+
+		// stats object
 		stats = {
-			health: 0,
+			maxHealth: 0,
 			fireRate: 0,
 			damages: 0,
 			speed: 0
 		}
 
+		// set the increment value and the gold amount
 		if(ev.target.id == "health-btn")
-			stats.health = 5;
+		{
+			amount = currentStats.maxHealth*1.2;
+			// check if the user has enough gold
+			if(amount > currentStats.gold)
+				return
+
+			stats.maxHealth = 5;
+			// for the health we also want to update the status bar
+		}
 		else if(ev.target.id == "firerate-btn")
+		{
+			amount = currentStats.fireRate/10*1.2;
+			if(amount > currentStats.gold)
+				return
+
 			stats.fireRate = 100;
+		}
 		else if(ev.target.id == "damages-btn")
+		{
+			amount = currentStats.damages*10*1.2;
+			if(amount > currentStats.gold)
+				return
+
 			stats.damages = 1;
+		}
 		else if(ev.target.id == "speed-btn")
+		{
+			amount = currentStats.speed*10*1.2;
+			if(amount > currentStats.gold)
+				return
+
 			stats.speed = 1;
+		}
+			
 
 		Meteor.call("upgradeBoat", Meteor.user()._id, stats);
-
 		// SPEND GOLD
+		Meteor.call("updateGold", Meteor.user()._id, -amount);
 	}
 
 });

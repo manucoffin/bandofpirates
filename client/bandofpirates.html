@@ -25,8 +25,8 @@
 
 <template name="statusBar">
 	<div id="status-bar">
-		<p id="health">100</p>
-		<p id="gold">
+		<p id="health"></p>
+		<p id="gold">gold : 
 			{{#each boatData}}
 				{{gold}}
 			{{/each}}
@@ -67,7 +67,7 @@
 		<p>
 			health : 
 			{{#each boatData}}
-				{{health}}
+				{{maxHealth}}
 			{{/each}}
 		</p>
 		<button id="health-btn" class="plus-btn">+</button>
