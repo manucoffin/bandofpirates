@@ -30,10 +30,26 @@ Accounts.ui.config({
 // subscription to server publications to pass datas between client/server via the databases
 Meteor.subscribe('boats');
 Meteor.subscribe('userStatus');
+Meteor.subscribe('messages'); // chat messages
+
+
+
+
+
+
+
 
 function startGame() {
 
 	console.log("starting game...");
+
+
+
+// ------------------------------------------------------------------------
+// 		INITIALIZE SETTINGS 
+// ------------------------------------------------------------------------
+
+
 
 
 	var game = new Phaser.Game(
@@ -55,7 +71,6 @@ function startGame() {
 	var sprite; // local player
 	var cursors;
 	var lBullets; // LOCAL bullets
-	var fireRate = 1000;//Boats.find({'owner': Meteor.user()._id}).fireRate;
 	var nextFire = 0;
 	var lBulletsDatasToSend = []; // an array of useful datas about bullets that we send in the database
 	var cloudsGroup;
@@ -91,7 +106,9 @@ function startGame() {
 
 
 
-
+// ------------------------------------------------------------------------
+// 		ON STREAMY MESSAGES
+// ------------------------------------------------------------------------
 
 
 
@@ -303,6 +320,12 @@ function startGame() {
 	});
 	
 
+
+
+
+
+
+
 // ------------------------------------------------------------------------
 // 		THE GAME
 // ------------------------------------------------------------------------
@@ -390,6 +413,8 @@ function startGame() {
 	    sprite.health = sprite.maxHealth;
 	    sprite.gold = Boats.find({'owner': Meteor.user()._id}).fetch()[0].gold;
 	    sprite.damages = Boats.find({'owner': Meteor.user()._id}).fetch()[0].damages;
+	    sprite.fireRate = Boats.find({'owner': Meteor.user()._id}).fetch()[0].fireRate;
+
 	    var rotateSprite = sprite.animations.add('rotateSprite');
 	    
 	    // update the status bar
@@ -693,7 +718,7 @@ function startGame() {
 		if (game.time.now > nextFire && lBullets.countDead() > 0)
 	    {
 	    	// set the time before we can shoot again
-	        nextFire = game.time.now + fireRate;
+	        nextFire = game.time.now + sprite.fireRate;
 
 	        // get a "dead" bullet (inactive bullet)
 	        let bullet = lBullets.getFirstDead();
@@ -753,6 +778,13 @@ function startGame() {
 
 
 
+
+
+
+
+// ------------------------------------------------------------------------
+// 		TEMPLATE HANDLERS
+// ------------------------------------------------------------------------
 
 
 
@@ -866,3 +898,40 @@ Template.upgradePannel.events({
 
 });
 
+
+
+Template.chat.helpers({
+	'messages': function(){
+		let count = Messages.find().count();
+		return Messages.find( {}, { sort: {date : 1}, skip: count-100, limit: 100 } );
+	}
+});
+
+// Global template helpers
+Template.registerHelper('formatDate', function(date) {
+	// we use this function to format date in the template
+	return moment(date).format('HH:mm'); 
+});
+
+Template.chat.events({
+
+	'keypress input': function(event) {
+        if (event.keyCode == 13) { // press ENTER key
+        	
+            let message = $("#message-content").val();
+            $("#message-content").val(""); // reset the input field
+			Meteor.call("insertMessage", Meteor.user(), message);
+
+            event.stopPropagation();
+            return false;
+        }
+    }
+});
+
+
+Template.chat.onRendered(function () {
+	// scroll to the bottom of the div
+	var height = $("#messages")[0].scrollHeight;
+	$("#messages").scrollTop(height);
+	
+});

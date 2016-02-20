@@ -80,3 +80,17 @@ body{
 #upgrade-pannel{
 	background-color: white;
 }
+
+#chat{
+	width: 300px;
+	height: 300px;
+	position: absolute;
+	margin: 0;
+	top: 0;
+	background-color: white;
+}
+
+#chat p{
+	height: 200px;
+	overflow-y: scroll;
+}

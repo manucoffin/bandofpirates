@@ -3,8 +3,6 @@
 </head>
 <body>
 
-	<!-- <button id="dropCollectionBtn">drop boats collection</button> -->
-
 	{{> game}}	
 
 </body>
@@ -18,6 +16,7 @@
 	{{> menu}}
 	{{> statusBar}}
 	{{> upgradePannel}}
+	{{> chat}}
 </template>
 
 
@@ -108,4 +107,19 @@
 		<p>This game was made by Manuel Coffin</p>
 		<p>You can find the full source code <a href="https://github.com/manucoffin/bandofpirates.git">here</a></p>
 	</div>
+</template>
+
+
+<template name="chat">
+	<section id="chat">
+
+		<p id="messages">
+			{{#each messages}}
+				[{{formatDate date}}] <strong>{{username}}</strong> says : {{message}} <br>
+			{{/each}}
+		</p>
+
+		<input type="text" id="message-content">
+
+	</section>
 </template>

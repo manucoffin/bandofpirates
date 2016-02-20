@@ -1,6 +1,19 @@
-Meteor.startup(function () {
+// Meteor.startup(function () {
 	
-});
+// });
+
+
+
+
+
+// ------------------------------------------------------------------------
+// 		COLLECTIONS PUBLICATION
+// ------------------------------------------------------------------------
+
+
+
+
+
 
 Meteor.publish('boats', function() {
 	return Boats.find({});
@@ -9,6 +22,25 @@ Meteor.publish('boats', function() {
 Meteor.publish("userStatus", function() {
   return Meteor.users.find({ "status.online": true });
 });
+
+Meteor.publish("messages", function() {
+  return Messages.find({});
+});
+
+
+
+
+	
+
+
+
+// ------------------------------------------------------------------------
+// 		CLOUDS HANDLING
+// ------------------------------------------------------------------------
+
+
+
+
 
 
 var cloudsPositions = [];
