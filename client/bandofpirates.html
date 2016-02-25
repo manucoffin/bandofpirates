@@ -12,11 +12,11 @@
 
 <template name="game">
 	<section id="game-view">
+		{{> chat}}
 	</section>
 	{{> menu}}
 	{{> statusBar}}
 	{{> upgradePannel}}
-	{{> chat}}
 </template>
 
 
@@ -119,7 +119,7 @@
 			{{/each}}
 		</p>
 
-		<input type="text" id="message-content">
+		<input type="text" id="message-content" placeholder="say something...">
 
 	</section>
 </template>

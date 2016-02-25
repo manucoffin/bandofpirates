@@ -82,15 +82,34 @@ body{
 }
 
 #chat{
+	display: none;
 	width: 300px;
-	height: 300px;
+	height: 100px;
 	position: absolute;
-	margin: 0;
-	top: 0;
-	background-color: white;
+	bottom:210px;
+	font-family: "arial";
 }
 
 #chat p{
-	height: 200px;
+	height: 100px;
 	overflow-y: scroll;
+	background-color: rgba(0,0,0,0.3);
+	color: rgb(154,255,138);
+	padding: 0 5px 0 5px;
+}
+
+#message-content{
+	width: 285px;
+	height: 20px;
+	background-color: rgba(255,255,255,0.9);
+	padding: 0 0 0 15px;
+	color: rgba(100,100,100,1);
+	border: none;
+	box-shadow: inset 1px 2px 0 rgba(0,0,0,0.5);
+	margin: 5px 0 0 0;
+}
+
+#message-content:focus{
+	background-color: rgba(255, 107, 34, 0.5);
+	color: white;
 }

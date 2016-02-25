@@ -126,6 +126,8 @@ function startGame() {
 					enemy.x = d.data.x + enemy.width/4;
 					enemy.y = d.data.y + enemy.height/4;
 					enemy.angle = d.data.angle;
+					enemy.nameLabel.x = enemy.x - enemy.width/2;
+					enemy.nameLabel.y = enemy.y - 60;
 
 					// change sprite image depending on the angle
 				    switch (enemy.angle){
@@ -234,6 +236,11 @@ function startGame() {
 			}
 			else
 			{
+				// play the death animation
+				death(sprite);
+				
+
+
 				// the player is dead so
 				// we reset his position and health
 				sprite.x = 100;
@@ -360,6 +367,8 @@ function startGame() {
     	game.load.image('bottom','assets/sprites/bottom.png');
     	game.load.image('bottomLeft','assets/sprites/bottomLeft.png');
 
+    	game.load.image('explosion','assets/sprites/explosion.png');
+
 
 	}
 
@@ -396,6 +405,9 @@ function startGame() {
 	    // 	Sprites settings:
 	    // ---------------------------------------
 
+	    // var explosion = game.add.sprite(500, 500, 'explosion');
+	    // var explode = explosion.animations.add('explode');
+	    
 	    
 
 	    // get where the boat was on its previous sessions
@@ -405,6 +417,7 @@ function startGame() {
 	    game.physics.enable(sprite, Phaser.Physics.ARCADE);
 	    sprite.anchor.setTo(0.5, 0.5);
 	    sprite.momentumVelocity = 0;
+
 	    sprite.fireSide = 90;
 	    sprite.body.setSize(40, 40, 5, 5);
 	    sprite.body.collideWorldBounds=true;
@@ -473,6 +486,20 @@ function startGame() {
 			    let dPlayerSprite = game.add.sprite(-1000, -1000, 'right');
 			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayerSprite.id = existingBoats[i].owner;
+			    
+			    // add label on remote players
+	    		dPlayerSprite.nameLabel = game.add.text(0, 0, 
+	    								existingBoats[i].username, 
+	    								{ 
+	    									font: "28px tream",
+	    									stroke: '#000000',
+    										strokeThickness: 3, 
+	    									fill: "#ffffff", 
+	    									align:"center",
+	    									wordWrap: true, 
+	    									wordWrapWidth: dPlayerSprite.width 
+	    								});
+			    
 			    dPlayers.add(dPlayerSprite);
 
 			    // then we loop through bullets array of each boat
@@ -494,42 +521,22 @@ function startGame() {
 	    cursors = game.input.keyboard.createCursorKeys();
 	    game.camera.follow(sprite);
 
+	    
+	    addKeyEvents();
 
-	    // handle the sprite rotation
-	    rotateLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-	    rotateLeftButton.onDown.add(function(){
-	    	// sprite.loadTexture('player2', 0);
-	    	if (sprite.angle>=-180)
-	    		sprite.angle += -45;
-	    	else
-	    		sprite.angle += 360;
-	    }, this);
+	    $("#message-content").focusin(function(){
+	    	game.input.onDown.removeAll();
+	    	game.input.keyboard.removeKey(Phaser.Keyboard.LEFT);
+			game.input.keyboard.removeKey(Phaser.Keyboard.RIGHT);
+			game.input.keyboard.removeKey(Phaser.Keyboard.A);
+			game.input.keyboard.removeKey(Phaser.Keyboard.E);
+	    })
 
-	    rotateRightButton = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-	    rotateRightButton.onDown.add(function(){
-	    	// sprite.loadTexture('player', 0);
-	    	if (sprite.angle<=180)
-	    		sprite.angle += 45;
-	    	else
-	    		sprite.angle += -360;
-	    }, this);
+		$("#message-content").focusout(function(){
+			addKeyEvents();
+		});
 
-
-	    fireSideLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
-	    fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
-
-	    fireSideLeftButton.onDown.add(function(){
-	    	sprite.fireSide = -90;
-	    	$("#fireside").text("LEFT");
-	    }, this);
-
-	    fireSideRightButton.onDown.add(function(){
-	    	sprite.fireSide = 90;
-	    	$("#fireside").text("RIGHT");
-	    }, this);
-
-
-
+		
 	    // ---------------------------------------
 	    // 	Other Features settings:
 	    // ---------------------------------------
@@ -645,9 +652,10 @@ function startGame() {
 	    // Move forward
 	    if (game.input.keyboard.isDown(Phaser.Keyboard.UP))
 	    {
-	    	// set the velocity, which create a thrust
-	    	// 200 is arbitrary value, greater value increase inertia
-	        sprite.momentumVelocity = 200;
+    		// set the velocity, which create a thrust
+    		// 200 is arbitrary value, greater value increase inertia
+        	sprite.momentumVelocity = 200;
+	    		    	
 	    }
 
 	    // Fire
@@ -756,6 +764,57 @@ function startGame() {
 		// Decrease health
 	}
 
+	function death(player){
+		$("#fight-logs").text("you are dead");
+		//player.kill();
+		// explosion = this.game.add.sprite(player.body.x, player.body.y, "explosion");
+		// explosion.anchor.setTo(0.5,0.5);
+		// explosion.animations.play("explode");
+		player.loadTexture('explosion', 0);
+        // Adding an animation ( 'key' )
+        // player.animations.add('explode');
+        // // To play the animation with the new texture ( 'key', frameRate, loop, killOnComplete)
+        // player.animations.play('explode', 7, false, false);
+	}
+
+
+
+
+	function addKeyEvents(){
+		// handle the sprite rotation
+	    rotateLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+		rotateRightButton = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+		fireSideLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
+		fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
+
+	    rotateLeftButton.onDown.add(function(){
+	    	// sprite.loadTexture('player2', 0);
+	    	if (sprite.angle>=-180)
+	    		sprite.angle += -45;
+	    	else
+	    		sprite.angle += 360;
+	    }, this);
+
+	    
+	    rotateRightButton.onDown.add(function(){
+	    	// sprite.loadTexture('player', 0);
+	    	if (sprite.angle<=180)
+	    		sprite.angle += 45;
+	    	else
+	    		sprite.angle += -360;
+	    }, this);
+
+	    fireSideLeftButton.onDown.add(function(){
+	    	sprite.fireSide = -90;
+	    	$("#fireside").text("LEFT");
+	    }, this);
+
+	    fireSideRightButton.onDown.add(function(){
+	    	sprite.fireSide = 90;
+	    	$("#fireside").text("RIGHT");
+	    }, this);
+	}
+
 
 
 	// Save datas every 10 seconds in the database
@@ -794,6 +853,7 @@ Template.menu.events({
 	"click #start-btn": function(){
 		$("#menu").css("display", "none");
 		$("#status-bar").css("display", "block");
+		$("#chat").css("display", "block");
 
 		// check if the looged in user already have a boat
 		let userId = Meteor.user()._id;
