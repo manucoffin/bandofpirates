@@ -25,16 +25,17 @@
 <template name="statusBar">
 	<div id="status-bar">
 		<p id="health"></p>
-		<p id="gold">gold : 
+		<!-- <p id="gold">gold : 
 			{{#each boatData}}
 				{{gold}}
 			{{/each}}
 		</p>
 		<p id="fight-logs"></p>
 		<p id="fireside"></p>
-		<p id="debug"></p>
+		<p id="debug"></p> -->
 
-		<button id="upgrade">UPGRADE</button>
+		<canvas id="jolly-roger-canvas" width="150" height="100"></canvas>
+    	<canvas id="temp-canvas" width="150" height="100" style="display:none;"></canvas>
 	</div>
 </template>
 

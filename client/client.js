@@ -43,7 +43,7 @@ function startGame() {
 
 	console.log("starting game...");
 
-
+	drawJollyRoger(76); // draw the life jauge full
 
 // ------------------------------------------------------------------------
 // 		INITIALIZE SETTINGS 
@@ -231,7 +231,10 @@ function startGame() {
 			{
 				// we decrease his health
 				sprite.health += -d.data.damages;
-				$("#health").text("health : "+ sprite.health);
+				$("#health").text(sprite.health);
+				// draw the life jauge with new percentage
+				let lifePercentage = sprite.health/sprite.maxHealth*100;
+				drawJollyRoger(76*lifePercentage/100);
 
 			}
 			else
@@ -246,7 +249,9 @@ function startGame() {
 				sprite.x = 100;
 				sprite.y = 100;
 				sprite.health = sprite.maxHealth;
-				
+				drawJollyRoger(76);
+				$("#health").text(sprite.health);
+
 				// we decrese his gold amount
 				var goldLost = Math.round(sprite.gold*0.25);
 				sprite.gold += -goldLost;
@@ -431,7 +436,7 @@ function startGame() {
 	    var rotateSprite = sprite.animations.add('rotateSprite');
 	    
 	    // update the status bar
-	    $("#health").text("health : "+ sprite.maxHealth);
+	    $("#health").text(sprite.maxHealth);
 
 
 
