@@ -53,8 +53,8 @@ function startGame() {
 
 
 	var game = new Phaser.Game(
-		1000, // size of the canvas created
-		600,
+		950, // size of the canvas created
+		550,
 		Phaser.AUTO,
 		'game-view', // div in which the canvas is appened
 		{ 
@@ -74,7 +74,7 @@ function startGame() {
 	var nextFire = 0;
 	var lBulletsDatasToSend = []; // an array of useful datas about bullets that we send in the database
 	var cloudsGroup;
-
+	var explosion;
 
 	var query = Boats.find({});	
 	var existingBoats = query.fetch(); // all the boats stored in the database
@@ -240,17 +240,14 @@ function startGame() {
 			else
 			{
 				// play the death animation
-				death(sprite);
+				sprite.dead = true;
+
+				// play the animation at the position where the player is
+				explosion.x = sprite.x-sprite.width/2;
+				explosion.y = sprite.y-sprite.height/2;
+				explosion.animations.play("explode", 10, false);
+				// once the animation is finished, it triggers the death function				
 				
-
-
-				// the player is dead so
-				// we reset his position and health
-				sprite.x = 100;
-				sprite.y = 100;
-				sprite.health = sprite.maxHealth;
-				drawJollyRoger(76);
-				$("#health").text(sprite.health);
 
 				// we decrese his gold amount
 				var goldLost = Math.round(sprite.gold*0.25);
@@ -265,6 +262,15 @@ function startGame() {
 						senderUsername: Meteor.user().username,
 						target: d.data.userId,
 						value: goldLost
+					}
+				});
+
+				// also broadcast a "death message" to tell the other players that somebody has died and where
+				Streamy.broadcast('deathMessage', {data:
+					{
+						senderId: Meteor.user()._id,
+						senderUsername: Meteor.user().username,
+						deathPosition: {x:explosion.x, y:explosion.y}
 					}
 				});
 
@@ -296,7 +302,24 @@ function startGame() {
 	});
 
 
+	Streamy.on('deathMessage', function(d){
+		$("#fight-logs").text(d.data.senderUsername + "'s boat sank!");
 
+		dPlayers.forEach(function(enemy) {
+			// if it is the user that has sent the message
+			if(enemy.id == d.data.senderId) {
+				// create an explosion sprite at its position
+				var dExplosion = game.add.sprite(d.data.deathPosition.x, d.data.deathPosition.y, 'explosion');
+			    // attach its animation 
+			    var dExplode = dExplosion.animations.add('explode');
+			    // attach a callback to kill the sprite when the animation is complete
+			    dExplode.killOnComplete = true;
+			    // and play the animation
+				dExplosion.animations.play("explode", 10, false);
+			}
+		}, this);
+
+	});
 
 
 
@@ -372,9 +395,8 @@ function startGame() {
     	game.load.image('bottom','assets/sprites/bottom.png');
     	game.load.image('bottomLeft','assets/sprites/bottomLeft.png');
 
-    	game.load.image('explosion','assets/sprites/explosion.png');
-
-
+    	game.load.spritesheet('explosion','assets/sprites/explosion.png', 40,40);
+    
 	}
 
 
@@ -409,10 +431,6 @@ function startGame() {
 		// ---------------------------------------
 	    // 	Sprites settings:
 	    // ---------------------------------------
-
-	    // var explosion = game.add.sprite(500, 500, 'explosion');
-	    // var explode = explosion.animations.add('explode');
-	    
 	    
 
 	    // get where the boat was on its previous sessions
@@ -435,6 +453,16 @@ function startGame() {
 
 	    var rotateSprite = sprite.animations.add('rotateSprite');
 	    
+	    // add an explosion sprite outside the game view
+	    explosion = game.add.sprite(-100, -100, 'explosion');
+	    // attach its animation 
+	    var explode = explosion.animations.add('explode');
+	    // callback when animation is complete
+	    explosion.animations.currentAnim.onComplete.add(function(){
+	    	// function that reset sprite position, health... etc
+			death(sprite);
+		}, this);
+
 	    // update the status bar
 	    $("#health").text(sprite.maxHealth);
 
@@ -505,6 +533,12 @@ function startGame() {
 	    									wordWrapWidth: dPlayerSprite.width 
 	    								});
 			    
+	    		// add explosion sprite to each players
+	    		// var dExplosion = game.add.sprite(0, 0, 'explosion');
+			    // // attach its animation 
+			    // var dExplode = dExplosion.animations.add('explode');
+			    // dPlayerSprite.addChild(dExplosion);
+
 			    dPlayers.add(dPlayerSprite);
 
 			    // then we loop through bullets array of each boat
@@ -598,58 +632,61 @@ function startGame() {
 	    	// particleEmitter.emitParticle();
 	    }
 
+	    // if the sprite is alive
+	    if (sprite.dead != true)
+	    {
+	    	// change sprite image depending on the angle
+		    switch (sprite.angle){
+		    	case 0:
+		    		sprite.loadTexture('right', 0);
+		    		// sprite.body.setSize(50, 20, 0, 20);
+		    		break;
 
-	    // change sprite image depending on the angle
-	    switch (sprite.angle){
-	    	case 0:
-	    		sprite.loadTexture('right', 0);
-	    		// sprite.body.setSize(50, 20, 0, 20);
-	    		break;
+		    	case 45:
+		    		sprite.loadTexture('bottomRight', 0);
+		    		// sprite.body.setSize(40, 30, 3, 15);
+		    		break;
 
-	    	case 45:
-	    		sprite.loadTexture('bottomRight', 0);
-	    		// sprite.body.setSize(40, 30, 3, 15);
-	    		break;
+		    	case 90:
+		    		sprite.loadTexture('bottom', 0);
+		    		// sprite.body.setSize(25, 30, 0, 10);
+		    		break;
 
-	    	case 90:
-	    		sprite.loadTexture('bottom', 0);
-	    		// sprite.body.setSize(25, 30, 0, 10);
-	    		break;
+		    	case 135:
+		    		sprite.loadTexture('bottomLeft', 0);
+		    		// sprite.body.setSize(45, 35, 0, 10);
+		    		break;
 
-	    	case 135:
-	    		sprite.loadTexture('bottomLeft', 0);
-	    		// sprite.body.setSize(45, 35, 0, 10);
-	    		break;
+		    	case -180:
+		    		sprite.loadTexture('left', 0);
+		    		// sprite.body.setSize(50, 20, 0, 20);
+		    		break;	
 
-	    	case -180:
-	    		sprite.loadTexture('left', 0);
-	    		// sprite.body.setSize(50, 20, 0, 20);
-	    		break;	
+		    	case -45:
+		    		sprite.loadTexture('topRight', 0);
+		    		// sprite.body.setSize(40, 30, 3, 15);
+		    		break;
 
-	    	case -45:
-	    		sprite.loadTexture('topRight', 0);
-	    		// sprite.body.setSize(40, 30, 3, 15);
-	    		break;
+		    	case -90:
+		    		sprite.loadTexture('top', 0);
+		    		// sprite.body.setSize(25, 30, 0, 10);
+		    		break;
 
-	    	case -90:
-	    		sprite.loadTexture('top', 0);
-	    		// sprite.body.setSize(25, 30, 0, 10);
-	    		break;
+		    	case -135:
+		    		sprite.loadTexture('topLeft', 0);
+		    		// sprite.body.setSize(45, 35, 0, 10);
+		    		break;
 
-	    	case -135:
-	    		sprite.loadTexture('topLeft', 0);
-	    		// sprite.body.setSize(45, 35, 0, 10);
-	    		break;
+		    	case -180:
+		    		sprite.loadTexture('left', 0);
+		    		// sprite.body.setSize(50, 20, 0, 20);
+		    		break;
 
-	    	case -180:
-	    		sprite.loadTexture('left', 0);
-	    		// sprite.body.setSize(50, 20, 0, 20);
-	    		break;
-
-	    	default:
-	    		sprite.loadTexture('right', 0);
-	    		// sprite.body.setSize(50, 20, 0, 20);
-	    		break;
+		    	default:
+		    		sprite.loadTexture('right', 0);
+		    		// sprite.body.setSize(50, 20, 0, 20);
+		    		break;
+		    }
 	    }
 
 
@@ -770,16 +807,18 @@ function startGame() {
 	}
 
 	function death(player){
-		$("#fight-logs").text("you are dead");
-		//player.kill();
-		// explosion = this.game.add.sprite(player.body.x, player.body.y, "explosion");
-		// explosion.anchor.setTo(0.5,0.5);
-		// explosion.animations.play("explode");
-		player.loadTexture('explosion', 0);
-        // Adding an animation ( 'key' )
-        // player.animations.add('explode');
-        // // To play the animation with the new texture ( 'key', frameRate, loop, killOnComplete)
-        // player.animations.play('explode', 7, false, false);
+	
+		$("#fight-logs").text("you are dead");		
+
+		// the player is dead so
+		// we reset his position and health
+		sprite.x = 100;
+		sprite.y = 100;
+		sprite.health = sprite.maxHealth;
+		drawJollyRoger(76);
+		player.dead = false;
+		$("#health").text(sprite.health);		
+
 	}
 
 
@@ -859,6 +898,7 @@ Template.menu.events({
 		$("#menu").css("display", "none");
 		$("#status-bar").css("display", "block");
 		$("#chat").css("display", "block");
+		$("#game-container").css("display", "block");
 
 		// check if the looged in user already have a boat
 		let userId = Meteor.user()._id;

@@ -16,8 +16,17 @@ body{
 
 #game-view{
 	display: block;
-	width: 1000px;
-	margin: 20px auto 0 auto;
+	width: 950px;
+	margin: 0 auto 0 auto;
+	padding: 80px 0 0 0;
+}
+
+#game-container{
+	display: none;
+	width: 1024px;
+	height: 768px;
+	margin: 0 auto 0 auto;
+	background-image: url("assets/css/images/game_bg.png");
 }
 
 
@@ -71,6 +80,7 @@ body{
 
 #upgrade-pannel{
 	background-color: white;
+	display: none;
 }
 
 #chat{
@@ -129,9 +139,29 @@ body{
 	height: 100px;
 	text-align: center;
 	line-height: 100px;
-	margin: 20px 0 0 0;
+	margin: 20px 0 0 400px;
 	color: white;
-	left: 410px;
+	font-size: 30px;
+	text-shadow: 0px -2px 0px rgba(0,0,0,1);
+	font-family: "tream";
+}
+
+#fight-logs{
+	position: absolute;
+	margin: 20px 0 0 70px;
+	color: rgb(91,72,0);
+	font-size: 24px;
+	font-family: "tream";
+}
+
+#gold{
+	position: absolute;
+	width: 150px;
+	height: 100px;
+	text-align: center;
+	line-height: 100px;
+	margin: 20px 0 0 550px;
+	color: white;
 	font-size: 30px;
 	text-shadow: 0px -2px 0px rgba(0,0,0,1);
 	font-family: "tream";

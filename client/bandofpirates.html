@@ -2,20 +2,21 @@
 	<title>Band of Pirates</title>
 </head>
 <body>
-
-	{{> game}}	
-
+		{{> game}}
 </body>
 
 
 
 
 <template name="game">
-	<section id="game-view">
-		{{> chat}}
-	</section>
+	<div id="game-container">
+		<section id="game-view">
+			{{> chat}}
+		</section>
+		{{> statusBar}}
+	</div>
+	
 	{{> menu}}
-	{{> statusBar}}
 	{{> upgradePannel}}
 </template>
 
@@ -25,13 +26,13 @@
 <template name="statusBar">
 	<div id="status-bar">
 		<p id="health"></p>
-		<!-- <p id="gold">gold : 
+		<p id="gold">
 			{{#each boatData}}
 				{{gold}}
 			{{/each}}
 		</p>
 		<p id="fight-logs"></p>
-		<p id="fireside"></p>
+		<!-- <p id="fireside"></p>
 		<p id="debug"></p> -->
 
 		<canvas id="jolly-roger-canvas" width="150" height="100"></canvas>
