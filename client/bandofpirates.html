@@ -12,12 +12,12 @@
 	<div id="game-container">
 		<section id="game-view">
 			{{> chat}}
+			{{> upgradePannel}}
 		</section>
 		{{> statusBar}}
 	</div>
 	
 	{{> menu}}
-	{{> upgradePannel}}
 </template>
 
 
@@ -37,6 +37,8 @@
 
 		<canvas id="jolly-roger-canvas" width="150" height="100"></canvas>
     	<canvas id="temp-canvas" width="150" height="100" style="display:none;"></canvas>
+
+    	<button id="upgrade-btn">upgrade</button>
 	</div>
 </template>
 
@@ -72,7 +74,7 @@
 			{{/each}}
 		</p>
 		<button id="health-btn" class="plus-btn">+</button>
-
+		<br>
 		<p>
 			damages : 
 			{{#each boatData}}
@@ -80,7 +82,7 @@
 			{{/each}}
 		</p>
 		<button id="damages-btn" class="plus-btn">+</button>
-
+		<br>
 		<p>
 			fire rate : 
 			{{#each boatData}}
@@ -88,7 +90,7 @@
 			{{/each}}
 		</p>
 		<button id="firerate-btn" class="plus-btn">+</button>
-
+		<br>
 		<p>
 			speed : 
 			{{#each boatData}}
@@ -97,7 +99,7 @@
 		</p>
 		<button id="speed-btn" class="plus-btn">+</button>
 
-		<button id="send-btn">OK</button>
+		<button id="close-btn">Close</button>
 	</div>
 </template>
 

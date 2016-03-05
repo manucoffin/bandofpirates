@@ -381,7 +381,7 @@ function startGame() {
 		game.load.tilemap('worldTileMap', 'assets/map.json', null, Phaser.Tilemap.TILED_JSON);
     	game.load.image('tiles', 'assets/tiles/tileset.png');
 
-    	game.load.image('bullet','assets/sprites/blue_ball.png');
+    	game.load.image('bullet','assets/sprites/canon_ball.png');
     	game.load.image('cloud1','assets/sprites/cloud1.png');
     	game.load.image('cloud2','assets/sprites/cloud2.png');
     	game.load.image('particle','assets/sprites/particle.png');
@@ -938,6 +938,17 @@ Template.statusBar.helpers({
 	}
 });
 
+Template.statusBar.events({
+	"click #upgrade-btn": function(){
+		// $("#upgrade-pannel").css("display", "block");
+		$( "#upgrade-pannel" ).animate({
+			height: "toggle" 
+		}, 1000, function() {
+			// Animation complete.
+		});
+	}
+});
+
 
 Template.upgradePannel.helpers({
 	'boatData': function(){
@@ -999,6 +1010,16 @@ Template.upgradePannel.events({
 		Meteor.call("upgradeBoat", Meteor.user()._id, stats);
 		// SPEND GOLD
 		Meteor.call("updateGold", Meteor.user()._id, -amount);
+	},
+
+	"click #close-btn":function(){
+		// $("#upgrade-pannel").css("display", "none");
+		$("#upgrade-pannel").animate({
+			height: "toggle"
+		}, 1000, function() {
+			// Animation complete.
+		});
+		
 	}
 
 });
