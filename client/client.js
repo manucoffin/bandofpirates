@@ -80,7 +80,10 @@ function startGame() {
 	var existingBoats = query.fetch(); // all the boats stored in the database
 	var myBoat = Boats.find({'owner': Meteor.user()._id}); // get only the boat of current user
 
-
+	var lifeBarProperties = {
+		width: 50,
+		height: 5
+	}
 
 
 
@@ -128,6 +131,10 @@ function startGame() {
 					enemy.angle = d.data.angle;
 					enemy.nameLabel.x = enemy.x - enemy.width/2;
 					enemy.nameLabel.y = enemy.y - 60;
+					
+					// update life bar position and width
+					var newWidth = lifeBarProperties.width * d.data.health/d.data.maxHealth;
+					updateLifeBar(enemy, newWidth);
 
 					// change sprite image depending on the angle
 				    switch (enemy.angle){
@@ -348,7 +355,9 @@ function startGame() {
 				if(enemy.id == user._id) {
 					// send him away
 					enemy.x = -1000;
-					enemy.y = -1000;
+					// and also hide its lifebar and namelabel
+					enemy.nameLabel.x = -1000;
+					enemy.barSprite.x = -1000
 				}
 			}, this);
 		}
@@ -509,6 +518,19 @@ function startGame() {
 		});
 
 
+
+
+
+
+		// draw a life bar
+		var lifeBar = game.add.bitmapData(lifeBarProperties.width, lifeBarProperties.height);// this create a canvas element
+		lifeBar.ctx.fillStyle = "red";
+		lifeBar.ctx.beginPath();
+		lifeBar.ctx.rect(0, 0, lifeBarProperties.width, lifeBarProperties.height);
+		lifeBar.ctx.fill();
+
+
+
 	    // initialize the array of distant players
 	    for(var i=0; i<existingBoats.length; i++)
 		{
@@ -521,7 +543,7 @@ function startGame() {
 			    dPlayerSprite.id = existingBoats[i].owner;
 			    
 			    // add label on remote players
-	    		dPlayerSprite.nameLabel = game.add.text(0, 0, 
+	    		dPlayerSprite.nameLabel = game.add.text(-1000, -1000, 
 	    								existingBoats[i].username, 
 	    								{ 
 	    									font: "28px tream",
@@ -532,13 +554,12 @@ function startGame() {
 	    									wordWrap: true, 
 	    									wordWrapWidth: dPlayerSprite.width 
 	    								});
-			    
-	    		// add explosion sprite to each players
-	    		// var dExplosion = game.add.sprite(0, 0, 'explosion');
-			    // // attach its animation 
-			    // var dExplode = dExplosion.animations.add('explode');
-			    // dPlayerSprite.addChild(dExplosion);
 
+	    		
+	    		// append the life bar to sprite
+	    		dPlayerSprite.lifeBar = game.add.bitmapData(lifeBarProperties.width, lifeBarProperties.height);// this create a canvas element
+				dPlayerSprite.barSprite = this.game.add.sprite(-1000, -1000, lifeBar);
+				// add sprite to the group
 			    dPlayers.add(dPlayerSprite);
 
 			    // then we loop through bullets array of each boat
@@ -735,6 +756,8 @@ function startGame() {
 				x: sprite.body.x, 
 				y: sprite.body.y,
 				width: sprite.width,
+				health: sprite.health,
+				maxHealth: sprite.maxHealth,
 				height: sprite.height,
 				angle: sprite.angle,
 				bullets: lBulletsDatasToSend
@@ -832,7 +855,6 @@ function startGame() {
 		fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
 
 	    rotateLeftButton.onDown.add(function(){
-	    	// sprite.loadTexture('player2', 0);
 	    	if (sprite.angle>=-180)
 	    		sprite.angle += -45;
 	    	else
@@ -841,7 +863,6 @@ function startGame() {
 
 	    
 	    rotateRightButton.onDown.add(function(){
-	    	// sprite.loadTexture('player', 0);
 	    	if (sprite.angle<=180)
 	    		sprite.angle += 45;
 	    	else
