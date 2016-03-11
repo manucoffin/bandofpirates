@@ -2,8 +2,8 @@
 // when the game template is rendered, we initialize the game for local player
 // (set up the map, the variables...etc)
 // then, when the player move or do anything, we do the changes locally
-// and we send player's data to the database, so that each player infos are constantly updated
-// so we can get other players datas from the database, and display them locally
+// and we stream player's data to everybody, so that each player infos are constantly updated
+// so we can get other players datas and display them locally
 
 
 
@@ -85,6 +85,7 @@ function startGame() {
 		height: 5
 	}
 
+	var fightLogsArr = ["", "", ""]; // array of 3 last fight logs
 
 
 
@@ -94,14 +95,13 @@ function startGame() {
 	var handle = myBoat.observeChanges({
 		changed: function () {
 			// need to declare the array again because it is not accessible from here
- 			let myBoatData = myBoat.fetch();
+			let myBoatData = myBoat.fetch();
 
 			sprite.maxHealth = myBoatData[0].maxHealth;
 			sprite.fireRate = myBoatData[0].fireRate;
 			sprite.damages = myBoatData[0].damages;
 			sprite.speed = myBoatData[0].speed;
 
-			$("#debug").text(sprite.fireRate + " ____ " +sprite.maxHealth + " ____ "+sprite.damages + " ____ "+sprite.speed)
 		}
 	})
 
@@ -140,52 +140,42 @@ function startGame() {
 				    switch (enemy.angle){
 			    	case 0:
 			    		enemy.loadTexture('right', 0);
-			    		// enemy.body.setSize(50, 20, 0, 20);
 			    		break;
 
 			    	case 45:
 			    		enemy.loadTexture('bottomRight', 0);
-			    		// enemy.body.setSize(40, 30, 3, 15);
 			    		break;
 
 			    	case 90:
 			    		enemy.loadTexture('bottom', 0);
-			    		// enemy.body.setSize(25, 30, 0, 10);
 			    		break;
 
 			    	case 135:
 			    		enemy.loadTexture('bottomLeft', 0);
-			    		// enemy.body.setSize(45, 35, 0, 10);
 			    		break;
 
 			    	case -180:
 			    		enemy.loadTexture('left', 0);
-			    		// enemy.body.setSize(50, 20, 0, 20);
 			    		break;	
 
 			    	case -45:
 			    		enemy.loadTexture('topRight', 0);
-			    		// enemy.body.setSize(40, 30, 3, 15);
 			    		break;
 
 			    	case -90:
 			    		enemy.loadTexture('top', 0);
-			    		// enemy.body.setSize(25, 30, 0, 10);
 			    		break;
 
 			    	case -135:
 			    		enemy.loadTexture('topLeft', 0);
-			    		// enemy.body.setSize(45, 35, 0, 10);
 			    		break;
 
 			    	case -180:
 			    		enemy.loadTexture('left', 0);
-			    		// enemy.body.setSize(50, 20, 0, 20);
 			    		break;
 
 			    	default:
 			    		enemy.loadTexture('right', 0);
-			    		// enemy.body.setSize(50, 20, 0, 20);
 			    		break;
 			    }
 
@@ -230,8 +220,9 @@ function startGame() {
 		// we check if the curent user have been hit
 		if(d.data.target == Meteor.user()._id)
 		{
-			// inform the player that he has been hit
-			$("#fight-logs").text(d.data.username + " hit you!");
+			// inform the player that he has been hit			
+			updateFightLogs(d.data.username + " hit you!", fightLogsArr);
+
 
 			// if the player still has health then
 			if(sprite.health > d.data.damages)
@@ -310,8 +301,9 @@ function startGame() {
 
 
 	Streamy.on('deathMessage', function(d){
-		$("#fight-logs").text(d.data.senderUsername + "'s boat sank!");
-
+		// inform all the players that a boat sank
+		updateFightLogs(d.data.senderUsername + "'s boat sank!", fightLogsArr);
+		
 		dPlayers.forEach(function(enemy) {
 			// if it is the user that has sent the message
 			if(enemy.id == d.data.senderId) {
@@ -337,15 +329,14 @@ function startGame() {
 		// on user connection
 		added: function(user) {
 			console.log(user.username + " is online");
+			userStatusLiveUpdate(user.username, " is online");
 		},
 
 		// on user disconnection
 		removed: function(user) {
 			console.log(user.username + " has logged off");
-
-
+			userStatusLiveUpdate(user.username, " has logged off");
 			// change the coordinates of the player that has disconnected 
-			
 			//on the database
 			Meteor.call("killBoat", user);
 
@@ -405,7 +396,7 @@ function startGame() {
     	game.load.image('bottomLeft','assets/sprites/bottomLeft.png');
 
     	game.load.spritesheet('explosion','assets/sprites/explosion.png', 40,40);
-    
+
 	}
 
 
@@ -541,7 +532,8 @@ function startGame() {
 			    let dPlayerSprite = game.add.sprite(-1000, -1000, 'right');
 			    dPlayerSprite.anchor.setTo(0.5, 0.5);
 			    dPlayerSprite.id = existingBoats[i].owner;
-			    
+			    dPlayerSprite.username = existingBoats[i].username;
+
 			    // add label on remote players
 	    		dPlayerSprite.nameLabel = game.add.text(-1000, -1000, 
 	    								existingBoats[i].username, 
@@ -810,6 +802,10 @@ function startGame() {
 
 	function hitEnnemy(bullet, player){
 		bullet.kill(); // kill the bullet locally
+		// inform the player that he hit an enemy
+		console.log(player)
+		updateFightLogs("you hit " + player.username + "!", fightLogsArr);
+		
 		Streamy.broadcast('hitDatas', { data: 
 			{
 				userId: Meteor.user()._id,
@@ -830,8 +826,8 @@ function startGame() {
 	}
 
 	function death(player){
-	
-		$("#fight-logs").text("you are dead");		
+		// inform the player that he is dead	
+		updateFightLogs("you are dead", fightLogsArr);
 
 		// the player is dead so
 		// we reset his position and health
@@ -853,6 +849,7 @@ function startGame() {
 		rotateRightButton = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
 		fireSideLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
 		fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
+		tabButton = game.input.keyboard.addKey(Phaser.Keyboard.TAB);
 
 	    rotateLeftButton.onDown.add(function(){
 	    	if (sprite.angle>=-180)
@@ -877,6 +874,14 @@ function startGame() {
 	    fireSideRightButton.onDown.add(function(){
 	    	sprite.fireSide = 90;
 	    	$("#fireside").text("RIGHT");
+	    }, this);
+
+	    tabButton.onDown.add(function(){
+	    	$("#users-list").css("display", "block");
+	    }, this);
+
+	    tabButton.onUp.add(function(){
+	    	$("#users-list").css("display", "none");
 	    }, this);
 	}
 
@@ -961,7 +966,6 @@ Template.statusBar.helpers({
 
 Template.statusBar.events({
 	"click #upgrade-btn": function(){
-		// $("#upgrade-pannel").css("display", "block");
 		$( "#upgrade-pannel" ).animate({
 			height: "toggle" 
 		}, 1000, function() {
@@ -1034,7 +1038,6 @@ Template.upgradePannel.events({
 	},
 
 	"click #close-btn":function(){
-		// $("#upgrade-pannel").css("display", "none");
 		$("#upgrade-pannel").animate({
 			height: "toggle"
 		}, 1000, function() {
@@ -1081,4 +1084,13 @@ Template.chat.onRendered(function () {
 	var height = $("#messages")[0].scrollHeight;
 	$("#messages").scrollTop(height);
 	
+});
+
+
+
+
+Template.usersList.helpers({
+	'users': function(){
+		return Meteor.users.find();
+	}
 });

@@ -13,6 +13,8 @@
 		<section id="game-view">
 			{{> chat}}
 			{{> upgradePannel}}
+			<p id="liveUpdateDiv"></p>
+			{{> usersList}}
 		</section>
 		{{> statusBar}}
 	</div>
@@ -31,7 +33,7 @@
 				{{gold}}
 			{{/each}}
 		</p>
-		<p id="fight-logs"></p>
+		<div id="fight-logs"></div>
 		<!-- <p id="fireside"></p>
 		<p id="debug"></p> -->
 
@@ -126,4 +128,32 @@
 		<input type="text" id="message-content" placeholder="say something...">
 
 	</section>
+</template>
+
+<template name="usersList">
+	<div id="users-list">
+		<p>Online users:</p>
+		<ul>
+			{{#each users}}
+				<li>{{username}}</li>
+				<!-- rank here -->
+			{{/each}}
+		</ul>
+	</div>
+</template>
+
+
+<template name="optionsPannel">
+	<div id="options-pannel">
+		<ul>
+			<li>turn Left: LEFT ARROW</li>
+			<li>turn Right: RIGHT ARROW</li>
+			<li>move Forward: UP ARROW</li>
+			<li>Fire: SPACEBAR</li>
+			<li>set fire side to Left: A or Q</li>
+			<li>set fire side to Right: E</li>
+			<li>set fire side to Front: Z or W</li>
+			<li>show score: TAB</li>
+		</ul>
+	</div>
 </template>
