@@ -450,6 +450,7 @@ function startGame() {
 	    sprite.gold = Boats.find({'owner': Meteor.user()._id}).fetch()[0].gold;
 	    sprite.damages = Boats.find({'owner': Meteor.user()._id}).fetch()[0].damages;
 	    sprite.fireRate = Boats.find({'owner': Meteor.user()._id}).fetch()[0].fireRate;
+	    sprite.speed = Boats.find({'owner': Meteor.user()._id}).fetch()[0].speed;
 
 	    var rotateSprite = sprite.animations.add('rotateSprite');
 	    
@@ -709,8 +710,7 @@ function startGame() {
 	    {
     		// set the velocity, which create a thrust
     		// 200 is arbitrary value, greater value increase inertia
-        	sprite.momentumVelocity = 200;
-	    		    	
+        	sprite.momentumVelocity = sprite.speed*5 + 200;
 	    }
 
 	    // Fire
@@ -998,7 +998,7 @@ Template.upgradePannel.events({
 		// set the increment value and the gold amount
 		if(ev.target.id == "health-btn")
 		{
-			amount = currentStats.maxHealth*1.2;
+			amount = currentStats.maxHealth*3;
 			// check if the user has enough gold
 			if(amount > currentStats.gold)
 				return
@@ -1008,11 +1008,11 @@ Template.upgradePannel.events({
 		}
 		else if(ev.target.id == "firerate-btn")
 		{
-			amount = currentStats.fireRate/10*1.2;
-			if(amount > currentStats.gold)
+			amount = -currentStats.fireRate * 10 + 11000; // cost (1000, 2000, 3000, ... , 10000)
+			if(amount > currentStats.gold || currentStats.fireRate == 100)
 				return
 
-			stats.fireRate = 100;
+			stats.fireRate = -100;
 		}
 		else if(ev.target.id == "damages-btn")
 		{
@@ -1024,7 +1024,7 @@ Template.upgradePannel.events({
 		}
 		else if(ev.target.id == "speed-btn")
 		{
-			amount = currentStats.speed*10*1.2;
+			amount = currentStats.speed * currentStats.speed*10+100;
 			if(amount > currentStats.gold)
 				return
 
@@ -1035,6 +1035,38 @@ Template.upgradePannel.events({
 		Meteor.call("upgradeBoat", Meteor.user()._id, stats);
 		// SPEND GOLD
 		Meteor.call("updateGold", Meteor.user()._id, -amount);
+	},
+
+	"mouseover .plus-btn":function(event){
+		$("#cost").css("display", "block");
+		$("#cost p").css("display", "none");
+		switch(event.target.id){
+			case "health-btn":
+			$("#health-price").css("display", "block");
+			break
+
+			case "firerate-btn":
+			$("#firerate-price").css("display", "block");
+			break
+
+			case "damages-btn":
+			$("#damages-price").css("display", "block");
+			break
+
+			case "speed-btn":
+			$("#speed-price").css("display", "block");
+			break
+		}
+
+		let offset = $("#upgrade-pannel").offset();
+		$("#cost").offset({
+			top: offset.top + event.target.offsetTop + 35, 
+			left: offset.left + event.target.offsetLeft
+		})
+	},
+
+	"mouseout .plus-btn":function(ev) {
+		$("#cost").css("display", "none");
 	},
 
 	"click #close-btn":function(){
@@ -1062,6 +1094,23 @@ Template.registerHelper('formatDate', function(date) {
 	// we use this function to format date in the template
 	return moment(date).format('HH:mm'); 
 });
+
+Template.registerHelper('getHealthPrice', function(stats) {
+	return stats*3;
+});
+
+Template.registerHelper('getDamagesPrice', function(stats) {
+	return stats*10*1.2;
+});
+
+Template.registerHelper('getFireratePrice', function(stats) {
+	return -stats * 10 + 11000;
+});
+
+Template.registerHelper('getSpeedPrice', function(stats) {
+	return stats * stats*10+100
+});
+
 
 Template.chat.events({
 

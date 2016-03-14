@@ -69,7 +69,15 @@
 
 <template name="upgradePannel">
 	<div id="upgrade-pannel">
-		<p>
+		<div id="cost">
+			{{#each boatData}}
+				<p id="health-price">{{getHealthPrice maxHealth}}$</p>
+				<p id="firerate-price">{{getFireratePrice fireRate}}$</p>
+				<p id="speed-price">{{getSpeedPrice speed}}$</p>
+				<p id="damages-price">{{getDamagesPrice damages}}$</p>
+			{{/each}}
+		</div>
+		<p class="current-stats">
 			health : 
 			{{#each boatData}}
 				{{maxHealth}}
@@ -77,7 +85,7 @@
 		</p>
 		<button id="health-btn" class="plus-btn">+</button>
 		<br>
-		<p>
+		<p class="current-stats">
 			damages : 
 			{{#each boatData}}
 				{{damages}}
@@ -85,7 +93,7 @@
 		</p>
 		<button id="damages-btn" class="plus-btn">+</button>
 		<br>
-		<p>
+		<p class="current-stats">
 			fire rate : 
 			{{#each boatData}}
 				{{fireRate}}
@@ -93,7 +101,7 @@
 		</p>
 		<button id="firerate-btn" class="plus-btn">+</button>
 		<br>
-		<p>
+		<p class="current-stats">
 			speed : 
 			{{#each boatData}}
 				{{speed}}
