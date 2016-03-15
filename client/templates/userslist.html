@@ -1,0 +1,11 @@
+<template name="usersList">
+	<div id="users-list">
+		<p>Online users:</p>
+		<ul>
+			{{#each users}}
+				<li>{{username}}</li>
+				<!-- rank here -->
+			{{/each}}
+		</ul>
+	</div>
+</template>

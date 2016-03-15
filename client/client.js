@@ -951,11 +951,21 @@ Template.body.events({
 	},
 
 	"click #logout-btn":function(){
-
 		Meteor.logout();
-
 	}
 
+});
+
+Template.game.events({
+	"click #help-btn":function(){
+		var visible = $("#help-layout").css("display");
+		console.log(visible)
+
+		if(visible == "block")
+			$("#help-layout").css("display", "none");
+		else
+			$("#help-layout").css("display", "block");
+	}
 });
 
 Template.statusBar.helpers({

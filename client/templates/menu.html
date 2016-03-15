@@ -1,0 +1,15 @@
+<template name="menu">
+	<div id="menu">
+		<div id="menu-btns">
+			{{#if currentUser}}
+				<button id="start-btn">start</button>
+				<button id="logout-btn">log out</button>
+			{{else}}
+				{{> loginButtons}}
+			{{/if}}
+		
+			<button>options</button>
+			<button>credits</button>
+		</div>
+	</div>
+</template>

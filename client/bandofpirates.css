@@ -82,8 +82,8 @@ body{
 	width: 300px;
 	height: 100px;
 	position: absolute;
-	bottom:210px;
 	font-family: "arial";
+	margin: 410px 0 0 0;
 }
 
 #chat p{
@@ -185,7 +185,7 @@ body{
 	width: 250px;
 	height: 550px;
 	color: white;
-	margin: 0 0 0 700px;
+	margin: 10px 0 0 700px;
 	font-size: 16px;
 	font-family: "arial";
 }
@@ -296,4 +296,153 @@ body{
 	background-color: rgba(0,0,0,0.3);
 	width: 400px;
 	margin: 20px 0 0 275px;
+	font-family: "arial";
+	color: white;
+	padding: 10px;
+}
+
+#users-list li{
+	list-style-type: none;
+	height: 25px;
+	line-height: 25px;
+	padding: 0 10px 0 10px;
+
+}
+
+#users-list li:nth-child(2n+0){
+	background-color: rgba(0,0,0,0.2);
+}
+
+#users-list p{
+	width: 100%;
+	text-align: center;
+	font-size: 18px;
+	height: 30px;
+	line-height: 30px;
+	margin: 0 0 20px 0;
+}
+
+#options-btn{
+	margin: 10px 0 0 920px;
+	background-image: url("assets/css/images/options_btn.png");
+}
+
+#help-btn{
+	margin: 10px 0 0 890px;
+	color: rgba(0,0,0,0.4);
+	font-family: "arial";
+	font-size: 18px;
+	font-weight: bold;
+}
+
+#help-btn, #options-btn{
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	border: none;
+	background-color: rgb(177,141,0); /* For browsers that do not support gradients */
+    border-radius: 3px;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
+}
+
+#help-btn:hover, #options-btn:hover{
+	cursor: pointer;
+	background-color: rgb(187,151,0);
+}
+
+#help-layout{
+	display: none;
+	position: absolute;
+}
+
+#help-layout p{
+	background-color: white;
+	font-family: "arial";
+	padding: 3px;
+	font-size: 13px;
+	position: absolute;
+	text-align: center;
+}
+
+#help-layout p:after{
+	content: '';
+	display: block;  
+	position: absolute;
+	width: 0;
+	height: 0;
+}
+
+#chat-help:after, #lb-help:after, #gs-help:after, #fs-help:after, #up-help:after{
+	top: 100%;
+	border-bottom: 7px solid transparent;
+	border-top: 7px solid white;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+}
+
+#general-help{
+	margin: 180px 0 0 300px;
+	width: 300px;
+	font-size: 20px;
+}
+#chat-help{
+	margin: 460px 0 0 130px;
+	width: 150px;
+}
+#fl-help{
+	margin: 570px 0 0 230px;
+	width: 150px
+}
+#fl-help:after{
+	bottom: 30px;
+	right: 100%;
+	border-bottom: 7px solid transparent;
+	border-top: 7px solid transparent;
+	border-left: 7px solid transparent;
+	border-right: 7px solid white;
+}
+
+#lb-help{
+	margin: 500px 0 0 360px;
+	width: 100px
+}
+#lb-help:after{
+	left: 80px;
+}
+
+#gs-help{
+	margin: 510px 0 0 500px;
+	width: 130px;
+}
+#gs-help:after{
+	left: 100px;
+}
+
+#fs-help{
+	margin: 490px 0 0 650px;
+	width: 150px;
+}
+#fs-help:after{
+
+}
+
+#up-help{
+	margin: 520px 0 0 830px;
+	width: 100px;
+}
+#up-help:after{
+	left: 20px;
+}
+
+#option-help{
+	margin: 35px 0 0 860px;
+	width: 80px;
+}
+#option-help:after{
+	left: 63px;
+	bottom: 100%;
+	border-bottom: 7px solid white;
+	border-top: 7px solid transparent;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
 }

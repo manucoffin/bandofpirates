@@ -1,0 +1,18 @@
+<template name="statusBar">
+	<div id="status-bar">
+		<p id="health"></p>
+		<p id="gold">
+			{{#each boatData}}
+				{{gold}}
+			{{/each}}
+		</p>
+		<div id="fight-logs"></div>
+		<!-- <p id="fireside"></p>
+		<p id="debug"></p> -->
+
+		<canvas id="jolly-roger-canvas" width="150" height="100"></canvas>
+    	<canvas id="temp-canvas" width="150" height="100" style="display:none;"></canvas>
+
+    	<button id="upgrade-btn">upgrade</button>
+	</div>
+</template>

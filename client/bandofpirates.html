@@ -6,162 +6,19 @@
 </body>
 
 
-
-
 <template name="game">
 	<div id="game-container">
 		<section id="game-view">
+			<button id="options-btn"></button>
+			<button id="help-btn">?</button>
 			{{> chat}}
 			{{> upgradePannel}}
 			<p id="liveUpdateDiv"></p>
 			{{> usersList}}
+			{{> help}}
 		</section>
 		{{> statusBar}}
 	</div>
 	
 	{{> menu}}
-</template>
-
-
-
-
-<template name="statusBar">
-	<div id="status-bar">
-		<p id="health"></p>
-		<p id="gold">
-			{{#each boatData}}
-				{{gold}}
-			{{/each}}
-		</p>
-		<div id="fight-logs"></div>
-		<!-- <p id="fireside"></p>
-		<p id="debug"></p> -->
-
-		<canvas id="jolly-roger-canvas" width="150" height="100"></canvas>
-    	<canvas id="temp-canvas" width="150" height="100" style="display:none;"></canvas>
-
-    	<button id="upgrade-btn">upgrade</button>
-	</div>
-</template>
-
-
-
-
-<template name="menu">
-	<div id="menu">
-		<div id="menu-btns">
-			{{#if currentUser}}
-				<button id="start-btn">start</button>
-				<button id="logout-btn">log out</button>
-			{{else}}
-				{{> loginButtons}}
-			{{/if}}
-		
-			<button>options</button>
-			<button>credits</button>
-		</div>
-	</div>
-</template>
-
-
-
-
-
-<template name="upgradePannel">
-	<div id="upgrade-pannel">
-		<div id="cost">
-			{{#each boatData}}
-				<p id="health-price">{{getHealthPrice maxHealth}}$</p>
-				<p id="firerate-price">{{getFireratePrice fireRate}}$</p>
-				<p id="speed-price">{{getSpeedPrice speed}}$</p>
-				<p id="damages-price">{{getDamagesPrice damages}}$</p>
-			{{/each}}
-		</div>
-		<p class="current-stats">
-			health : 
-			{{#each boatData}}
-				{{maxHealth}}
-			{{/each}}
-		</p>
-		<button id="health-btn" class="plus-btn">+</button>
-		<br>
-		<p class="current-stats">
-			damages : 
-			{{#each boatData}}
-				{{damages}}
-			{{/each}}
-		</p>
-		<button id="damages-btn" class="plus-btn">+</button>
-		<br>
-		<p class="current-stats">
-			fire rate : 
-			{{#each boatData}}
-				{{fireRate}}
-			{{/each}}
-		</p>
-		<button id="firerate-btn" class="plus-btn">+</button>
-		<br>
-		<p class="current-stats">
-			speed : 
-			{{#each boatData}}
-				{{speed}}
-			{{/each}}
-		</p>
-		<button id="speed-btn" class="plus-btn">+</button>
-
-		<button id="close-btn">Close</button>
-	</div>
-</template>
-
-
-
-
-<template name="credits">
-	<div id="credits">
-		<p>This game was made by Manuel Coffin</p>
-		<p>You can find the full source code <a href="https://github.com/manucoffin/bandofpirates.git">here</a></p>
-	</div>
-</template>
-
-
-<template name="chat">
-	<section id="chat">
-
-		<p id="messages">
-			{{#each messages}}
-				[{{formatDate date}}] <strong>{{username}}</strong> says : {{message}} <br>
-			{{/each}}
-		</p>
-
-		<input type="text" id="message-content" placeholder="say something...">
-
-	</section>
-</template>
-
-<template name="usersList">
-	<div id="users-list">
-		<p>Online users:</p>
-		<ul>
-			{{#each users}}
-				<li>{{username}}</li>
-				<!-- rank here -->
-			{{/each}}
-		</ul>
-	</div>
-</template>
-
-
-<template name="optionsPannel">
-	<div id="options-pannel">
-		<ul>
-			<li>turn Left: LEFT ARROW</li>
-			<li>turn Right: RIGHT ARROW</li>
-			<li>move Forward: UP ARROW</li>
-			<li>Fire: SPACEBAR</li>
-			<li>set fire side to Left: A or Q</li>
-			<li>set fire side to Right: E</li>
-			<li>set fire side to Front: Z or W</li>
-			<li>show score: TAB</li>
-		</ul>
-	</div>
 </template>

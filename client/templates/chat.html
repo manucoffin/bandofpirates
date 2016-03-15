@@ -1,0 +1,11 @@
+<template name="chat">
+	<section id="chat">
+		<p id="messages">
+			{{#each messages}}
+				[{{formatDate date}}] <strong>{{username}}</strong> says : {{message}} <br>
+			{{/each}}
+		</p>
+
+		<input type="text" id="message-content" placeholder="say something...">
+	</section>
+</template>
