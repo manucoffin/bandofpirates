@@ -44,6 +44,8 @@ function startGame() {
 	console.log("starting game...");
 
 	drawJollyRoger(76); // draw the life jauge full
+	scrollDownChat();
+
 
 // ------------------------------------------------------------------------
 // 		INITIALIZE SETTINGS 
@@ -252,14 +254,21 @@ function startGame() {
 				sprite.gold += -goldLost;
 
 				Meteor.call("updateGold", Meteor.user()._id, -goldLost); // update the database
+				Meteor.call("updateNbDeath", Meteor.user()._id);
 
+				let enemyScore = d.data.score;
+				let playerScore = Boats.find({'owner': Meteor.user()._id}).fetch()[0].score;
+				let increment = calculateScore(enemyScore, playerScore, "loose");
+
+				Meteor.call("updateScore", Meteor.user()._id, -increment);
 				// broadcast a message "gold transfer" between the players
 				Streamy.broadcast('goldTransfer', { data: 
 					{
 						senderId: Meteor.user()._id,
 						senderUsername: Meteor.user().username,
 						target: d.data.userId,
-						value: goldLost
+						value: goldLost,
+						score: playerScore
 					}
 				});
 
@@ -285,6 +294,12 @@ function startGame() {
 			let ammount = d.data.value + 100; // gold stolen + fixed reward to create gold in the game
 			sprite.gold += ammount; // update locally
 			Meteor.call("updateGold", Meteor.user()._id, ammount); // update the database
+			Meteor.call("updateNbKills", Meteor.user()._id);
+			let enemyScore = d.data.score;
+			let playerScore = Boats.find({'owner': Meteor.user()._id}).fetch()[0].score;
+			let increment = calculateScore(enemyScore, playerScore, "win");
+
+			Meteor.call("updateScore", Meteor.user()._id, increment);
 		}
 
 	});
@@ -330,12 +345,14 @@ function startGame() {
 		added: function(user) {
 			console.log(user.username + " is online");
 			userStatusLiveUpdate(user.username, " is online");
+			Meteor.call("updateConnStatus", user._id, true);
 		},
 
 		// on user disconnection
 		removed: function(user) {
 			console.log(user.username + " has logged off");
 			userStatusLiveUpdate(user.username, " has logged off");
+			Meteor.call("updateConnStatus", user._id, false);
 			// change the coordinates of the player that has disconnected 
 			//on the database
 			Meteor.call("killBoat", user);
@@ -581,8 +598,8 @@ function startGame() {
 	    	game.input.onDown.removeAll();
 	    	game.input.keyboard.removeKey(Phaser.Keyboard.LEFT);
 			game.input.keyboard.removeKey(Phaser.Keyboard.RIGHT);
-			game.input.keyboard.removeKey(Phaser.Keyboard.A);
-			game.input.keyboard.removeKey(Phaser.Keyboard.E);
+			// game.input.keyboard.removeKey(Phaser.Keyboard.A);
+			// game.input.keyboard.removeKey(Phaser.Keyboard.E);
 	    })
 
 		$("#message-content").focusout(function(){
@@ -714,10 +731,30 @@ function startGame() {
 	    }
 
 	    // Fire
-	    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
+	    // if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
+	    // {
+	    //     fire(sprite.rotation);
+	    // }
+	    // Fire LEFT
+	    if (game.input.keyboard.isDown(Phaser.Keyboard.X))
 	    {
+	    	sprite.fireSide = -90;
 	        fire(sprite.rotation);
 	    }
+	    // Fire RIGHT
+	    if (game.input.keyboard.isDown(Phaser.Keyboard.V))
+	    {
+	    	sprite.fireSide = 90;
+	        fire(sprite.rotation);
+	    }
+	    // Fire FORWARD
+	    if (game.input.keyboard.isDown(Phaser.Keyboard.C))
+	    {
+	    	sprite.fireSide = 0;
+	        fire(sprite.rotation);
+	    }
+
+
 
 	    // we loop through the bullets group
 	    lBullets.forEach(function(bullet)
@@ -803,7 +840,6 @@ function startGame() {
 	function hitEnnemy(bullet, player){
 		bullet.kill(); // kill the bullet locally
 		// inform the player that he hit an enemy
-		console.log(player)
 		updateFightLogs("you hit " + player.username + "!", fightLogsArr);
 		
 		Streamy.broadcast('hitDatas', { data: 
@@ -811,7 +847,8 @@ function startGame() {
 				userId: Meteor.user()._id,
 				username: Meteor.user().username,
 				target: player.id,
-				damages: sprite.damages
+				damages: sprite.damages,
+				score: Boats.find({'owner': Meteor.user()._id}).fetch()[0].score
 			}
 		});
 	}
@@ -847,8 +884,8 @@ function startGame() {
 		// handle the sprite rotation
 	    rotateLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
 		rotateRightButton = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-		fireSideLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
-		fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
+		// fireSideLeftButton = game.input.keyboard.addKey(Phaser.Keyboard.A);
+		// fireSideRightButton = game.input.keyboard.addKey(Phaser.Keyboard.E);
 		tabButton = game.input.keyboard.addKey(Phaser.Keyboard.TAB);
 
 	    rotateLeftButton.onDown.add(function(){
@@ -866,15 +903,15 @@ function startGame() {
 	    		sprite.angle += -360;
 	    }, this);
 
-	    fireSideLeftButton.onDown.add(function(){
-	    	sprite.fireSide = -90;
-	    	$("#fireside").text("LEFT");
-	    }, this);
+	    // fireSideLeftButton.onDown.add(function(){
+	    // 	sprite.fireSide = -90;
+	    // 	$("#fireside").text("LEFT");
+	    // }, this);
 
-	    fireSideRightButton.onDown.add(function(){
-	    	sprite.fireSide = 90;
-	    	$("#fireside").text("RIGHT");
-	    }, this);
+	    // fireSideRightButton.onDown.add(function(){
+	    // 	sprite.fireSide = 90;
+	    // 	$("#fireside").text("RIGHT");
+	    // }, this);
 
 	    tabButton.onDown.add(function(){
 	    	$("#users-list").css("display", "block");
@@ -939,6 +976,16 @@ Template.menu.events({
 		{
 			startGame();
 		}
+	},
+
+	"click #leaderboards-btn":function(){
+		$("#leaderboards").css("display", "block");
+		$("#menu").css("display", "none");
+	},
+
+	"click #credits-btn":function(){
+		$("#credits").css("display", "block");
+		$("#menu").css("display", "none");
 	}
 });
 
@@ -959,12 +1006,26 @@ Template.body.events({
 Template.game.events({
 	"click #help-btn":function(){
 		var visible = $("#help-layout").css("display");
-		console.log(visible)
 
 		if(visible == "block")
 			$("#help-layout").css("display", "none");
 		else
 			$("#help-layout").css("display", "block");
+	},
+
+	"click #options-btn":function(){
+		var visible = $("#options-pannel").css("display");
+
+		if(visible == "block")
+			$("#options-pannel").css("display", "none");
+		else
+			$("#options-pannel").css("display", "block");
+	}
+});
+
+Template.optionsPannel.events({
+	"click #close-options-btn":function(){
+		$("#options-pannel").css("display", "none");
 	}
 });
 
@@ -1139,10 +1200,9 @@ Template.chat.events({
 
 
 Template.chat.onRendered(function () {
-	// scroll to the bottom of the div
-	var height = $("#messages")[0].scrollHeight;
-	$("#messages").scrollTop(height);
 	
+	scrollDownChat();
+
 });
 
 
@@ -1151,5 +1211,30 @@ Template.chat.onRendered(function () {
 Template.usersList.helpers({
 	'users': function(){
 		return Meteor.users.find();
+	},
+
+	'connectedUsers':function(){
+		return Boats.find({'connected': true});
 	}
 });
+
+
+Template.leaderboards.helpers({
+	'users': function(){
+		return Boats.find();
+	}
+});
+
+Template.leaderboards.events({
+	"click .back-btn":function(){
+		$("#leaderboards").css("display", "none");
+		$("#menu").css("display", "block");
+	}
+})
+
+Template.credits.events({
+	"click .back-btn":function(){
+		$("#credits").css("display", "none");
+		$("#menu").css("display", "block");
+	}
+})

@@ -1,0 +1,12 @@
+<template name="leaderboards">
+	<div id="leaderboards">
+		<button class="back-btn">&larr;</button>
+		<h2>Leaderboards</h2>
+		<ol>
+			{{#each users}}
+				<li>{{username}} - {{nbKills}} - {{nbDeath}} - {{score}}</li>
+				<!-- rank here -->
+			{{/each}}
+		</ol>
+	</div>
+</template>

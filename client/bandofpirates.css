@@ -154,11 +154,16 @@ body{
 	height: 100px;
 	text-align: center;
 	line-height: 100px;
-	margin: 20px 0 0 550px;
+	margin: 20px 0 0 500px;
 	color: white;
 	font-size: 30px;
 	text-shadow: 0px -2px 0px rgba(0,0,0,1);
 	font-family: "tream";
+}
+
+#chest-img{
+	position: absolute;
+	margin: 10px 0 0 550px;
 }
 
 #upgrade-btn{
@@ -203,15 +208,20 @@ body{
 #cost{
 	display: none;
 	background-color: white;
-	width: 40px;
+	width: 45px;
 	height: 20px;
 	position: absolute;
 	color: black;
-	padding: 0 5px 0 5px;
+	padding: 0 5px 0 0px;
 	font-family: "arial";
 	line-height: 20px;
 	font-size: 12px;
-	text-align: center;
+	text-align: right;
+}
+
+#cost img{
+	float: left;
+	margin: 3px 0 0 3px;
 }
 
 #cost:after{
@@ -252,7 +262,7 @@ body{
     background: linear-gradient( rgb(80,250,115), rgb(52,229,109) ); /* Standard syntax */
 }
 
-#close-btn{
+.close-btn{
 	display: block;
 	border:none;
 	width: 70px;
@@ -271,7 +281,7 @@ body{
 }
 
 
-#close-btn:hover{
+.close-btn:hover{
 	cursor: pointer;
 	background: rgb(205,52,36); /* For browsers that do not support gradients */
     background: -webkit-linear-gradient( rgb(255,70,60), rgb(247,57,51) ); /* For Safari 5.1 to 6.0 */
@@ -294,8 +304,8 @@ body{
 	display: none;
 	position: absolute;
 	background-color: rgba(0,0,0,0.3);
-	width: 400px;
-	margin: 20px 0 0 275px;
+	width: 200px;
+	margin: 40px 0 0 0;
 	font-family: "arial";
 	color: white;
 	padding: 10px;
@@ -310,7 +320,8 @@ body{
 }
 
 #users-list li:nth-child(2n+0){
-	background-color: rgba(0,0,0,0.2);
+	background-color: rgba(255,255,255,0.2);
+	color: rgb(255,255,255);
 }
 
 #users-list p{
@@ -372,7 +383,7 @@ body{
 	height: 0;
 }
 
-#chat-help:after, #lb-help:after, #gs-help:after, #fs-help:after, #up-help:after{
+#chat-help:after, #lb-help:after, #gs-help:after, #up-help:after{
 	top: 100%;
 	border-bottom: 7px solid transparent;
 	border-top: 7px solid white;
@@ -411,20 +422,13 @@ body{
 }
 
 #gs-help{
-	margin: 510px 0 0 500px;
+	margin: 500px 0 0 500px;
 	width: 130px;
 }
 #gs-help:after{
-	left: 100px;
+	left: 40px;
 }
 
-#fs-help{
-	margin: 490px 0 0 650px;
-	width: 150px;
-}
-#fs-help:after{
-
-}
 
 #up-help{
 	margin: 520px 0 0 830px;
@@ -445,4 +449,96 @@ body{
 	border-top: 7px solid transparent;
 	border-left: 7px solid transparent;
 	border-right: 7px solid transparent;
+}
+
+
+#options-pannel{
+	display: none;
+	position: absolute;
+	width: 300px;
+	background-color: rgba(0,0,0,0.5);
+	margin: 20px 0 0 325px;
+	color: white;
+	font-family: "arial";
+}
+
+
+#options-pannel li{
+	list-style-type: none;
+	height: 30px;
+	text-align: center;
+}
+
+#options-pannel h2{
+	text-align: center;
+	margin: 20px 0 10px 0;
+}
+
+#options-pannel ul{
+	margin: 20px 0 0 0;
+}
+
+.left{
+	display: inline-block;
+	text-align: right;
+	width: 150px;
+	float: left;
+	left: 0;
+}
+
+#close-options-btn{
+	margin: 20px auto 20px auto;
+}
+
+#leaderboards, #credits{
+	display: none;
+	width: 500px;
+	height: 450px;
+	margin: 0 auto 0 auto;
+	background-image: url("assets/css/images/menu_empty_bg.png");
+	background-repeat: no-repeat;
+	padding: 50px 0 0 0;
+}
+
+#leaderboards ol{
+	margin: 20px 0 0 80px;
+	font-family: 'tream';
+	font-size: 26px;
+	color: rgb(36,24,5);
+	height: 230px;
+	width: 350px;
+	list-style-position:inside;
+	overflow-y: scroll; 
+}
+
+#leaderboards h2{
+	font-family: 'tream';
+	color: rgb(36,24,5);
+	font-size: 2em;
+	width: 200px;
+	margin: 0 0 0 50px;
+	display: inline-block;
+}
+
+.back-btn{
+	width: 50px;
+	height: 30px;
+	margin: 30px 0 0 70px;
+	border: none;
+	background-color: transparent;
+	font-size: 30px;
+	color: rgb(36,24,5);
+}
+
+.back-btn:hover{
+	cursor: pointer;
+}
+
+#credits p{
+	display: block;
+	width: 300px;
+	margin: 20px auto 0 auto;
+	text-align: center;
+	font-family: 'tream';
+	font-size: 20px;
 }

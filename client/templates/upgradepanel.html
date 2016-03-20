@@ -2,10 +2,10 @@
 	<div id="upgrade-pannel">
 		<div id="cost">
 			{{#each boatData}}
-				<p id="health-price">{{getHealthPrice maxHealth}}$</p>
-				<p id="firerate-price">{{getFireratePrice fireRate}}$</p>
-				<p id="speed-price">{{getSpeedPrice speed}}$</p>
-				<p id="damages-price">{{getDamagesPrice damages}}$</p>
+				<p id="health-price">{{getHealthPrice maxHealth}} <img src="assets/css/images/pieces.png" width="15px"></p>
+				<p id="firerate-price">{{getFireratePrice fireRate}} <img src="assets/css/images/pieces.png" width="15px"></p>
+				<p id="speed-price">{{getSpeedPrice speed}} <img src="assets/css/images/pieces.png" width="15px"></p>
+				<p id="damages-price">{{getDamagesPrice damages}} <img src="assets/css/images/pieces.png" width="15px"></p>
 			{{/each}}
 		</div>
 		<p class="current-stats">
@@ -40,6 +40,6 @@
 		</p>
 		<button id="speed-btn" class="plus-btn">+</button>
 
-		<button id="close-btn">Close</button>
+		<button id="close-btn" class="close-btn">Close</button>
 	</div>
 </template>

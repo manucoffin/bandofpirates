@@ -24,3 +24,9 @@ updateFightLogs = function(string, arr){
 
 	$("#fight-logs").html(htmlString);
 }
+
+scrollDownChat = function(){
+	// scroll to the bottom of the div
+	var height = $("#messages")[0].scrollHeight;
+	$("#messages").scrollTop(height);
+}
