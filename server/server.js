@@ -2,7 +2,18 @@
 	
 // });
 
+// Accounts.onCreateUser(function(options, user){
+// 	Streamy.broadcast('newUser', {data:
+// 		{
+// 			username: user.username
+// 		}
+// 	});
 
+// 	// default behavior in order to allow the user creation
+// 	if (options.profile)
+// 	    user.profile = options.profile;
+// 	return user;
+// });
 
 
 
