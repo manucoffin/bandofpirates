@@ -43,8 +43,6 @@ function startGame() {
 
 	console.log("starting game...");
 
-	alert("When a new user register you may not see him, it is a bug I couldn't fix. If you reload everything will be fine. If the problem persists just try to reload 2-3 times.");
-
 	drawJollyRoger(76); // draw the life jauge full
 	scrollDownChat();
 
@@ -79,6 +77,8 @@ function startGame() {
 	var lBulletsDatasToSend = []; // an array of useful datas about bullets that we send in the database
 	var cloudsGroup;
 	var explosion;
+	var explosionAudio;
+	var cannonAudio;
 
 	var query = Boats.find({});	
 	var existingBoats = query.fetch(); // all the boats stored in the database
@@ -112,14 +112,13 @@ function startGame() {
 	// because the template rendering function doesn't work as expected
 	// we need to handle the chat scroll down this way:
 	var myMessages = Messages.find();
-	var messagesHandle = myMessages.observeChanges({
+	var messagesHandle = myMessages.observe({
 		// every time a message is inserted in the database
 		added: function(){
-			// we wait to the dom to be rendered (defer is equivalent to setTimeout)
-			Meteor.defer(function(){
-				// and we scroll down
+			// we need to wait a little bit that the dom is re-rendered
+			window.setTimeout(function(){
 				scrollDownChat();
-			});
+			},200);
 		}
 	});
 
@@ -269,13 +268,21 @@ function startGame() {
 
 				Meteor.call("updateGold", Meteor.user()._id, -goldLost); // update the database
 				Meteor.call("updateNbDeath", Meteor.user()._id);
+
+				let enemyScore = d.data.score;
+				let playerScore = Boats.find({'owner': Meteor.user()._id}).fetch()[0].score;
+				let increment = calculateScore(enemyScore, playerScore, "loose");
+  
+ 				Meteor.call("updateScore", Meteor.user()._id, -increment);
+
 				// broadcast a message "gold transfer" between the players
 				Streamy.broadcast('goldTransfer', { data: 
 					{
 						senderId: Meteor.user()._id,
 						senderUsername: Meteor.user().username,
 						target: d.data.userId,
-						value: goldLost
+						value: goldLost,
+						score: playerScore
 					}
 				});
 
@@ -302,6 +309,12 @@ function startGame() {
 			sprite.gold += ammount; // update locally
 			Meteor.call("updateGold", Meteor.user()._id, ammount); // update the database
 			Meteor.call("updateNbKills", Meteor.user()._id);
+
+			let enemyScore = d.data.score;
+			let playerScore = Boats.find({'owner': Meteor.user()._id}).fetch()[0].score;
+			let increment = calculateScore(enemyScore, playerScore, "win");
+			 
+			Meteor.call("updateScore", Meteor.user()._id, increment);
 		}
 
 	});
@@ -335,6 +348,8 @@ function startGame() {
 			}
 		}, this);
 
+		explosionAudio.play();
+
 	});
 
 
@@ -347,6 +362,7 @@ function startGame() {
 		added: function(user) {
 			console.log(user.username + " is online");
 			userStatusLiveUpdate(user.username, " is online");
+			Meteor.call("updateConnStatus", user._id, true);
 		},
 
 		// on user disconnection
@@ -356,7 +372,7 @@ function startGame() {
 			// change the coordinates of the player that has disconnected 
 			//on the database
 			Meteor.call("killBoat", user);
-
+			Meteor.call("updateConnStatus", user._id, false);
 			// and locally
 			dPlayers.forEach(function(enemy) {
 				// find the user who have disconnect
@@ -372,10 +388,10 @@ function startGame() {
 	});
 
 
-	// Streamy.on('newUser', function(d){
-	// 	// error message to alert players when a new user register
-	// 	alert("A new User (" + d.data.username + ") has registered. You may not see him, it is a bug I couldn't fix. Please reload the page everything will be fine. If the problem persists just try to reload 2-3 times.");
-	// });
+	Streamy.on('newUser', function(d){
+		// error message to alert players when a new user register
+		alert("A new User (" + d.data.username + ") has registered. You may not see him, it is a bug I couldn't fix. Please reload the page everything will be fine. If the problem persists just try to reload 2-3 times.");
+	});
 	
 
 
@@ -401,6 +417,7 @@ function startGame() {
 		// prevent game pausing when loosing focus on browser
 		game.stage.disableVisibilityChange = true; 
 	
+		// IMAGES
 		game.load.tilemap('worldTileMap', 'assets/map.json', null, Phaser.Tilemap.TILED_JSON);
     	game.load.image('tiles', 'assets/tiles/tileset.png');
 
@@ -420,6 +437,9 @@ function startGame() {
 
     	game.load.spritesheet('explosion','assets/sprites/explosion.png', 40,40);
 
+    	// AUDIO
+    	game.load.audio('explosionAudio', 'assets/audio/explosion.mp3');
+    	game.load.audio('cannonAudio', 'assets/audio/cannon.mp3');
 	}
 
 
@@ -638,6 +658,19 @@ function startGame() {
 	    }
 
 
+	    // Sounds Settings
+	    explosionAudio = game.add.audio('explosionAudio');
+	    cannonAudio = game.add.audio('cannonAudio');
+
+	    // 	From phaser docs:
+	    //  Being mp3 files these take time to decode, so we can't play them instantly
+	    //  Using setDecodedCallback we can be notified when they're ALL ready for use.
+	    //  The audio files could decode in ANY order, we can never be sure which it'll be.
+
+	    // game.sound.setDecodedCallback([ explosionAudio, cannonAudio ], update, this);
+
+
+
 	}
 
 
@@ -825,6 +858,7 @@ function startGame() {
 		// and if there are enough lBullets in the pool
 		if (game.time.now > nextFire && lBullets.countDead() > 0)
 	    {
+	    	cannonAudio.play();
 	    	// set the time before we can shoot again
 	        nextFire = game.time.now + sprite.fireRate;
 
@@ -846,7 +880,6 @@ function startGame() {
 	function hitEnnemy(bullet, player){
 		bullet.kill(); // kill the bullet locally
 		// inform the player that he hit an enemy
-		console.log(player)
 		updateFightLogs("you hit " + player.username + "!", fightLogsArr);
 		
 		Streamy.broadcast('hitDatas', { data: 
@@ -854,7 +887,8 @@ function startGame() {
 				userId: Meteor.user()._id,
 				username: Meteor.user().username,
 				target: player.id,
-				damages: sprite.damages
+				damages: sprite.damages,
+				score: Boats.find({'owner': Meteor.user()._id}).fetch()[0].score
 			}
 		});
 	}
@@ -1208,15 +1242,15 @@ Template.chat.events({
 
 
 Template.usersList.helpers({
-	'users': function(){
-		return Meteor.users.find();
+	'connectedUsers': function(){
+		return Boats.find( {'connected': true}, { sort: {score : -1} } )
 	}
 });
 
 
 Template.leaderboards.helpers({
 	'users': function(){
-		return Boats.find();
+		return Boats.find( {}, { sort: {score : -1} } );
 	}
 });
 
