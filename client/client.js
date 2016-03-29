@@ -18,7 +18,9 @@ Meteor._debug = (function (super_meteor_debug) {
 
 
 
-
+Meteor.startup(function(){
+	Hooks.init();
+});
 
 
 
@@ -389,8 +391,11 @@ function startGame() {
 
 
 	Streamy.on('newUser', function(d){
+		// let username = Meteor.users.find({'_id': d.data.user}).fetch()[0].username;
 		// error message to alert players when a new user register
-		alert("A new User (" + d.data.username + ") has registered. You may not see him, it is a bug I couldn't fix. Please reload the page everything will be fine. If the problem persists just try to reload 2-3 times.");
+		alert("A new User has registered. You may not see him, it is a bug I couldn't fix. \n"+
+				"Please reload the page everything will be fine. \n" +
+				"If you can't move after reloading just try to reload again.");
 	});
 	
 
@@ -435,7 +440,7 @@ function startGame() {
     	game.load.image('bottom','assets/sprites/bottom.png');
     	game.load.image('bottomLeft','assets/sprites/bottomLeft.png');
 
-    	game.load.spritesheet('explosion','assets/sprites/explosion.png', 40,40);
+    	game.load.spritesheet('explosion','assets/sprites/explosion.png', 60, 60, 8);
 
     	// AUDIO
     	game.load.audio('explosionAudio', 'assets/audio/explosion.mp3');

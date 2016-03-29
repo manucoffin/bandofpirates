@@ -1,6 +1,12 @@
-// Meteor.startup(function () {
-	
-// });
+Meteor.startup(function () {
+	Hooks.onCreateUser = function (userId) {
+		Streamy.broadcast('newUser', {data:
+			{
+				user: userId
+			}
+		});
+	}	
+});
 
 // Accounts.onCreateUser(function(options, user){
 // 	Streamy.broadcast('newUser', {data:
@@ -14,6 +20,7 @@
 // 	    user.profile = options.profile;
 // 	return user;
 // });
+
 
 
 
