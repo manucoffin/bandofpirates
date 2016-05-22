@@ -30,7 +30,7 @@
   // Configure environment
   // ROOT_URL must be set to your correct domain (https or http)
   "env": {
-    "PORT": 80,
+    "PORT": 3001,
     "ROOT_URL": "http://51.254.32.153/"
   },
 
